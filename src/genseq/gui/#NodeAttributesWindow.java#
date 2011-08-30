@@ -1,0 +1,337 @@
+package genseq.gui;
+
+import genseq.midi.MIDIConstants;
+import genseq.midi.Note;
+import genseq.obj.Node;
+
+import java.awt.Button;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Insets;
+import java.awt.Label;
+import java.awt.Checkbox;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.ArrayList;
+
+import processing.core.PApplet;
+
+@SuppressWarnings("serial")
+public class NodeAttributesWindow extends Frame implements MIDIConstants {
+
+	/*** BASIC LOOK & FEEL CONSTANTS ***/
+	private static final int DEFAULT_WIDTH = 300;
+	private static final int DEFAULT_HEIGHT = 200;
+	private static final int COMPONENT_GAP = 10;
+	
+	/*** EXTERNAL REFERENCES ***/
+	private PApplet parent;
+	private Node node;
+	private EventCreatorWindow ecw;
+	
+	/*** INTERNAL REFERENCES ***/
+	private ArrayList<Object> nodeNotes;
+	
+	/*** GUI COMPONENTS ***/
+	private Checkbox primeBox;
+	private TextField pitchField;
+	private Button noteAdd;
+
+
+	public NodeAttributesWindow(PApplet parent, Node node) {
+		this.parent = parent;
+		this.node = node;
+		
+		nodeNotes = node.getNotes();
+
+		init();
+	}
+
+	private void init() {
+		//Hashtable<String, Node.AttPair> attributes = node.getAttributes();
+		//Enumeration<String> atnames = attributes.keys();
+		
+		// Construct the EventCreatorWindow, for use if required
+		ecw = new EventCreatorWindow(this);
+		
+		// Allow the user to close the window
+		// When the window closes, save all preferences for this node.
+		addWindowListener(new WindowAdapter() {
+			//Hashtable<String,Node.AttPair> attributes = node.getAttributes();
+						
+			public void windowClosing(WindowEvent we) {
+				// Update our node
+				updateNode();
+			}
+		});
+		
+		// Basic window setup
+		setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+		setMinimumSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+		setLayout(new GridBagLayout());
+		setResizable(false);
+		setTitle("Node Attributes");
+		
+		/*** CONSTRUCT COMPONENTS ***/
+		int row = 0;
+		
+		// Construct prime checkbox
+		primeBox = new Checkbox();
+		primeBox.setState(node.isPrimeNode());
+		primeBox.addItemListener(new primeBoxItemListener());
+		addLabelAndComponent("Prime", primeBox, row++);
+		
+		// Construct pitch field
+		pitchField = new TextField();
+		pitchField.setEditable(false);
+		
+		// Set the text in the field based on the current selection of notes.
+		// This selection might be a list of singleton notes, or could be
+		// a List of single notes and pitch clusters (which will be encoded
+		// as an ArrayList<Note>).
+		StringBuilder s = new StringBuilder();
+		for (Object ev : ((ArrayList<Object>)nodeNotes)) {
+			if (ev instanceof ArrayList) {
+				s.append('(');
+				
+				for (Note n : ((ArrayList<Note>)ev)) {
+					s.append(PITCHES[n.getPitch()]);
+					s.append(",");
+				}
+				
+				s.append("), ");
+			}
+			else if (ev instanceof Note) {
+				s.append(PITCHES[((Note) ev).getPitch()]);
+				s.append(", ");
+			}
+		}
+		
+		if (s.length() >= 2)
+			s.delete(s.length() - 2, s.length());
+		
+		pitchField.setText(s.toString());
+		
+		addLabelAndComponent("Pitches", pitchField, row++);
+		
+		
+		// Add the Note Editor button
+		noteAdd = new Button("Edit Notes");
+		noteAdd.addActionListener(new noteAddActionListener());
+		addComponent(noteAdd, row++);
+		
+//		// Build the components and place them in the window
+//		int row = 0;
+//		while (atnames.hasMoreElements()) {
+//			String key = atnames.nextElement();
+//			String labelText = (String)attributes.get(key).getDescription();
+//			Object data = attributes.get(key).getData();
+//			
+//			if (key.equals("prime")) {
+//				Checkbox primeBox = new Checkbox();
+//				primeBox.setName(key);
+//				primeBox.setState((Boolean)data);
+//				addLabelAndComponent(labelText, primeBox, row);
+//			}
+//			else if (key.equals("notes")) {
+//				pitchField = new TextField();
+//				pitchField.setName(key);
+//								
+//				// Set the text in the field based on the current selection of notes.
+//				// This selection might be a list of singleton notes, or could be
+//				// a List of single notes and pitch clusters (which will be encoded
+//				// as an ArrayList<Note>).
+//				StringBuilder s = new StringBuilder();
+//				for (Object ev : ((ArrayList<Object>)data)) {
+//					if (ev instanceof ArrayList) {
+//						s.append('(');
+//						
+//						for (Note n : ((ArrayList<Note>)ev)) {
+//							s.append(PITCHES[n.getPitch()]);
+//							s.append(",");
+//						}
+//						
+//						s.append("), ");
+//					}
+//					else if (ev instanceof Note) {
+//						s.append(PITCHES[((Note) ev).getPitch()]);
+//						s.append(", ");
+//					}
+//				}
+//				
+//				if (s.length() >= 2)
+//					s.delete(s.length() - 2, s.length());
+//				
+//				pitchField.setText(s.toString());
+//				
+//				addLabelAndComponent(labelText, pitchField, row++);
+//				
+//				// Construct a button to open the Event Creator
+//				Button b = new Button("Note Editor");
+//				b.addActionListener(new ActionListener() {
+//					public void actionPerformed(ActionEvent e) {
+//						ecw.setVisible(true);
+//					}
+//				});
+//				
+//				addComponent(b, row);
+//			}
+//			
+//			row++;
+//		}
+		
+		pack();
+		setVisible(true);
+	}
+	
+	private void addLabelAndComponent(String labeltext, Component c, int row) {
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.gridx = 0;
+		constraints.gridy = row;
+		constraints.weightx = 0;
+		constraints.weighty = 0;
+		constraints.fill = GridBagConstraints.NONE;
+		constraints.insets = new Insets(COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP);
+		Label theLabel = new Label(labeltext);
+		theLabel.setAlignment(Label.LEFT);
+		
+		add(theLabel, constraints);
+		
+		constraints.gridx = 1;
+		constraints.gridy = row;
+		constraints.weightx = 1;
+		constraints.weighty = 0;
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		constraints.insets = new Insets(COMPONENT_GAP, 0, COMPONENT_GAP, COMPONENT_GAP);
+		
+		// Maximize width
+		c.setPreferredSize(new Dimension(DEFAULT_WIDTH - theLabel.getMinimumSize().width - 2*COMPONENT_GAP,
+				c.getHeight()));
+		
+		add(c, constraints);
+	}
+	
+	private void addComponent(Component c, int row) {
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.gridx = 0;
+		constraints.gridy = row;
+		constraints.weightx = 1;
+		constraints.weighty = 0;
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		constraints.insets = new Insets(COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP);
+		
+		// Maximize width
+		c.setPreferredSize(new Dimension(DEFAULT_WIDTH - 2*COMPONENT_GAP,
+				c.getHeight()));
+		
+		add(c, constraints);
+	}
+	
+	/**
+	 * addToPitchField - append text to the TextField pitchField .
+	 * This method gets used EventCreatorWindow.
+	 * 
+	 * @param s - The string that is to be appended.
+	 */
+	public void addToPitchField(String s) {
+		if (null != pitchField) {
+			StringBuilder newtext = new StringBuilder(pitchField.getText());
+			if (newtext.length() > 0)
+				newtext.append(", ");
+			
+			newtext.append(s);
+			
+			pitchField.setText(newtext.toString());
+		}
+	}
+	
+	/**
+	 * notesEditied()
+	 * 
+	 * @param notes - Notes that were created in the EventCreatorWindow
+	 * 
+	 * This function is called when "Add Notes" is clicked in the ECW, or when
+	 * that window is closed.
+	 * 
+	 */
+	public void notesEdited(ArrayList<Note> notes) {
+		if (notes.size() < 1)
+			return;
+		
+		if (notes.size() == 1)
+			nodeNotes.add(notes.get(0));
+		
+		else if (notes.size() > 1)
+			nodeNotes.add(notes);
+		
+		// Update pitchField
+		StringBuilder s = new StringBuilder();
+		
+		if (notes.size() > 1)
+			s.append('(');
+
+		for (Note n : notes) {
+			s.append(PITCHES[n.getPitch()]);
+			s.append(",");
+		}
+		// Remove the last comma
+		s.deleteCharAt(s.length()-1);
+		
+		if (notes.size() > 1)
+			s.append(')');
+		
+		StringBuilder newtext = new StringBuilder(pitchField.getText());
+		if (newtext.length() >= 1)
+			newtext.append(", ");
+		
+		newtext.append(s);
+		pitchField.setText(newtext.toString());
+	}
+	
+	/**
+	 * Update the node we were called from.
+	 */
+	private void updateNode() {
+		// Save preferences
+		node.setNotes(nodeNotes);
+		
+		// Refresh the node's properties.
+		node.refresh();
+		
+		setVisible(false);
+	}
+	
+	/******************
+	 * INTERNAL CLASSES 
+	 *****************/
+
+	private class primeBoxItemListener implements ItemListener {
+
+		public void itemStateChanged(ItemEvent e) {
+			node.setPrime(primeBox.getState());
+			node.refresh();
+		}
+		
+	}
+
+	private class noteAddActionListener implements ActionListener {
+		
+		public void actionPerformed(ActionEvent e) {
+			ecw.setVisible(true);
+		}
+		
+	}
+	
+}

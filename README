@@ -1,0 +1,17 @@
+README -----#####
+
+GenSeq -----#####
+
+GenSeq (a working title) is a free MIDI generative sequencer application. It is only a few weeks
+old, so is in need of a lot of help. Currently, only very basic features are implemented. Most of
+the documentation of this project can be found inside of comments within the code itself, so dig
+in! The basic concept of this project follows.
+
+The user designs a generative score based on a graph constructed of Nodes and Edges. A Node may
+represent any musical event, and it is connected to any number of other nodes. Each node plays
+its musical event specified by a corresponding likelihood. (TODO:) A connected component of the
+overall graph can be encapsulated in a MetaNode, which can be treated as any other Node in the
+contruction of the graph. This allows the user to create larger non-deterministic musical
+structures. Multiple layers of generative scores (up to 16) allow for complex counterpoint.
+
+First commit, Tue Aug 30 02:12:42 EDT 2011
