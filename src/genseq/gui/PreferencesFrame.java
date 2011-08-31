@@ -1,6 +1,7 @@
 package genseq.gui;
 
 import genseq.midi.GenSeq;
+import genseq.midi.MidiCommon;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Toolkit;
@@ -171,11 +172,13 @@ public class PreferencesFrame extends Frame {
 			try {
 				midiDevice = MidiSystem.getMidiDevice(synthInfoList.get(deviceNo));
 				midiDevice.open();
-				gsApplication.setMidiDevice(midiDevice);
+				MidiCommon.setMidiDevice(midiDevice);
 			} catch (MidiUnavailableException e1) {
 				System.err.println("Unable to open MIDI Device : "+synthInfoList.get(deviceNo).toString());
 				System.err.println("It could be that another application has reserved this device. Try shutting down other " +
 						"sequencer applications and try again.");
+				
+				//TODO: Remove this after debugging.
 				e1.printStackTrace();
 			} 
 			

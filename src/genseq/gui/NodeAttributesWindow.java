@@ -1,12 +1,14 @@
 package genseq.gui;
 
 import genseq.midi.MIDIConstants;
+import genseq.midi.MidiCommon;
 import genseq.midi.Note;
 import genseq.obj.NodeEvent;
 import genseq.obj.Node;
-
+import java.awt.AWTEvent;
 import java.awt.AWTEventMulticaster;
 import java.awt.Adjustable;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Button;
 import java.awt.Dimension;
@@ -18,7 +20,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.List;
 import java.awt.Panel;
-//import java.awt.ValueSlider;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,7 +42,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	/*** BASIC LOOK & FEEL CONSTANTS ***/
 	private static final int DEFAULT_WIDTH = 500;
 	private static final int DEFAULT_HEIGHT = 600;
-	private static final int COMPONENT_GAP = 10;
+	private static final int COMPONENT_GAP = 10;	// The amount of space (px) between components
 
 	// How wide "Remove", "Insert", and "Save" buttons are at bottom of the Frame
 	private static final int NL_BUTTONS_WIDTH = 400;
@@ -55,8 +56,8 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	private int currEvent;
 
 	/*** GUI COMPONENTS ***/
-	private Checkbox primeBox;
-	private TextField pitchField;
+	private Checkbox primeBox, sonBox; // sonBox = "stop other notes box"
+	private Label pitchLabel;
 	private List pitchList;
 	private ValueSlider velSlider, lhoodSlider;
 	private Label velDisp, lhoodDisp;
@@ -68,7 +69,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	public NodeAttributesWindow(PApplet parent, Node node) {
 		this.parent = parent;
 		this.node = node;
-
+		
 		nodeEventList = node.getEventList();
 
 		constructComponents();
@@ -78,47 +79,54 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		// Allow the user to close the window
 		// When the window closes, save all preferences for this node.
 		addWindowListener(new WindowAdapter() {
-			//Hashtable<String,Node.AttPair> attributes = node.getAttributes();
-
+			
 			public void windowClosing(WindowEvent we) {
 				// Update our node
 				updateNode();
 			}
-		});
-		
-		// How this window should behave per usage of the keyboard
-		addKeyListener(new KeyListener() {
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				switch (e.getKeyCode()) {
-				
-				case KeyEvent.VK_ESCAPE:
-					setVisible(false);
-					break;
-					
-				}
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-				
-			}
-
-			@Override
-			public void keyTyped(KeyEvent e) {
-				
-			}
 			
 		});
+		
+//		// How this window should behave per usage of the keyboard
+//		addKeyListener(new KeyListener() {
+//
+//			@Override
+//			public void keyPressed(KeyEvent e) {
+//				System.out.println("NAW : Key pressed!");
+//				
+//				switch (e.getKeyCode()) {
+//				
+//				case KeyEvent.VK_ESCAPE:
+//					setVisible(false);
+//					break;
+//					
+//				}
+//			}
+//
+//			@Override
+//			public void keyReleased(KeyEvent e) {
+//				
+//			}
+//
+//			@Override
+//			public void keyTyped(KeyEvent e) {
+//				
+//			}
+//			
+//		});
 
 		// Basic window setup
 		setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		setMinimumSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		setLayout(new GridBagLayout());
+		this.setBackground(new Color(100, 100, 100));
+		this.setForeground(Color.WHITE);
 		GridBagConstraints constraints = new GridBagConstraints();
 		setResizable(false);
 		setTitle("Node Attributes");
+		
+		int row = 0; // Use this variable for inserting components at a vertical position.
+		// Much easier to do row++ than modify every freakin' component in this window.
 
 		/*** CONSTRUCT COMPONENTS ***/
 
@@ -126,19 +134,23 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		primeBox = new Checkbox();
 		primeBox.setState(node.isPrimeNode());
 		primeBox.addItemListener(new primeBoxItemListener());
-		setConstraints(constraints, 0, 0);
+		sonBox = new Checkbox();
+		sonBox.setState(node.isLegato());
+		sonBox.addItemListener(new sonBoxItemListener());
+		setConstraints(constraints, 0, row);
 		add(new Label("Prime"), constraints);
-		setConstraints(constraints, 1, 0);
+		setConstraints(constraints, 1, row++);
 		add(primeBox, constraints);
+		setConstraints(constraints, 0, row);
+		add(new Label("Legato"), constraints);
+		setConstraints(constraints, 1, row++);
+		add(sonBox, constraints);
 
 		// Construct pitch field
-		pitchField = new TextField();
-		pitchField.setEditable(false);
+		pitchLabel = new Label("Event List contents: ");
 
-		setConstraints(constraints, 0, 1);
-		add(new Label("Pitches"), constraints);
-		setConstraints(constraints, 1, 1, 3, 1);
-		add(pitchField, constraints);
+		setConstraints(constraints, 0, row++, 4, 1);
+		add(pitchLabel, constraints);
 
 
 
@@ -154,15 +166,16 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 			pitchList.add(notename);
 		}
 		pitchList.setMultipleMode(true);
-
+		pitchList.setBackground(new Color(50, 50, 50));
+		pitchList.setForeground(Color.WHITE);
 
 
 		// Sliders for velocity and likelihood, respectively
 		// ValueSlider(ORIENTATION, INITVALUE, VISIBLE, MIN, MAX + 1)
 		velDisp = new Label("100");
 		lhoodDisp = new Label("1.0");
-		velSlider = new ValueSlider(ValueSlider.VERTICAL, 100, 1, 128, 0);
-		lhoodSlider = new ValueSlider(ValueSlider.VERTICAL, 100, 1, 101, 0);
+		velSlider = new ValueSlider(ValueSlider.VERTICAL, 100, 0, 127, 0);
+		lhoodSlider = new ValueSlider(ValueSlider.VERTICAL, 100, 0, 100, 0);
 		velSlider.addAdjustmentListener(new velSliderAdjustmentListener());
 		lhoodSlider.addAdjustmentListener(new lhoodSliderAdjustmentListener());
 
@@ -199,31 +212,33 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 
 
 		// Add the pitch list, with label
-		setConstraints(constraints, 0, 2, 2, 1);
+		setConstraints(constraints, 0, row, 2, 1);
 		add(new Label("Pitch(es)"), constraints);
-		setConstraints(constraints, 0, 3, 2, 2, 1, 1);
+		setConstraints(constraints, 0, row+1, 2, 2, 1, 1);
 		add(pitchList, constraints);
 
 		// Add the velocity slider, with label and display
-		setConstraints(constraints, 2, 2);
+		setConstraints(constraints, 2, row);
 		add(new Label("Velocity"), constraints);
-		setConstraints(constraints, 2, 3, 1, 1, 0, 1);
+		setConstraints(constraints, 2, row+1, 1, 1, 0, 1);
 		add(velSlider, constraints);
-		setConstraints(constraints, 2, 4);
+		setConstraints(constraints, 2, row+2);
 		add(velDisp, constraints);
 
 		// Add the likelihood slider, with label and display
-		setConstraints(constraints, 3, 2);
+		setConstraints(constraints, 3, row);
 		add(new Label("Likelihood"), constraints);
-		setConstraints(constraints, 3, 3, 1, 1, 0, 1);
+		setConstraints(constraints, 3, row+1, 1, 1, 0, 1);
 		add(lhoodSlider, constraints);
-		setConstraints(constraints, 3, 4);
+		setConstraints(constraints, 3, row+2);
 		add(lhoodDisp, constraints);
 
+		row+=3;
+		
 		// Create notelist navigation buttons with label
-		setConstraints(constraints, 0, 5, 1, 1, 0.5, 0);
+		setConstraints(constraints, 0, row, 1, 1, 0.5, 0);
 		add(backwardButton, constraints);
-		setConstraints(constraints, 1, 5, 1, 1, 0.5, 0);
+		setConstraints(constraints, 1, row, 1, 1, 0.5, 0);
 		add(forwardButton, constraints);
 		// It seems we have to create a new GridBagConstraints here, since using
 		// our nice setConstraints() method will cause this label to take over
@@ -231,21 +246,21 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		// buttons not to work.
 		GridBagConstraints labelConstraints = new GridBagConstraints();
 		labelConstraints.gridx = 2;
-		labelConstraints.gridy = 5;
+		labelConstraints.gridy = row++;
 		labelConstraints.fill = GridBagConstraints.HORIZONTAL;
 		add(whichEvent, labelConstraints);
 
 		// Create buttons for editing notelists
 		GridBagConstraints lnButtonsContraints = new GridBagConstraints();
 		lnButtonsContraints.gridx = 0;
-		lnButtonsContraints.gridy = 6;
+		lnButtonsContraints.gridy = row;
 		lnButtonsContraints.insets = new Insets(0, COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP);
 		lnButtonsContraints.fill = GridBagConstraints.NONE;
 		remButton.setPreferredSize(new Dimension(NL_BUTTONS_WIDTH, remButton.getHeight()));
 		add(remButton, lnButtonsContraints);
 
 		lnButtonsContraints.gridx = 1;
-		lnButtonsContraints.gridy = 6;
+		lnButtonsContraints.gridy = row;
 		lnButtonsContraints.insets = new Insets(0, COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP);
 		lnButtonsContraints.fill = GridBagConstraints.NONE;
 		insButton.setPreferredSize(new Dimension(NL_BUTTONS_WIDTH, insButton.getHeight()));
@@ -254,14 +269,14 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 
 
 		lnButtonsContraints.gridx = 2;
-		lnButtonsContraints.gridy = 6;
+		lnButtonsContraints.gridy = row++;
 		lnButtonsContraints.insets = new Insets(0, COMPONENT_GAP, COMPONENT_GAP, COMPONENT_GAP);
 		lnButtonsContraints.fill = GridBagConstraints.NONE;
 		saveButton.setPreferredSize(new Dimension(NL_BUTTONS_WIDTH, saveButton.getHeight()));
 		add(saveButton, lnButtonsContraints);
 
 		// Create the close and add buttons
-		setConstraints(constraints, 3, 7);
+		setConstraints(constraints, 3, row);
 		add(closeButton, constraints);
 
 		// Load the first event
@@ -303,14 +318,14 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	 * @param s - The string that is to be appended.
 	 */
 	public void addToPitchField(String s) {
-		if (null != pitchField) {
-			StringBuilder newtext = new StringBuilder(pitchField.getText());
+		if (null != pitchLabel) {
+			StringBuilder newtext = new StringBuilder(pitchLabel.getText());
 			if (newtext.length() > 0)
 				newtext.append(", ");
 
 			newtext.append(s);
 
-			pitchField.setText(newtext.toString());
+			pitchLabel.setText(newtext.toString());
 		}
 	}
 
@@ -341,11 +356,15 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		else
 			return;
 
-
+		// Deselect all items
+		for (int i = 0; i<pitchList.getItemCount(); i++)
+			pitchList.deselect(i);
+		
 		for (Note n : e.getNotes()) {
 			int pitch = n.getPitch();
 			int velocity = n.getVelocity();
 
+			// Select items that are in the event
 			if (REST == n.getPitch())
 				pitchList.select(0);
 			else
@@ -376,7 +395,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 			// Remove comma and space
 			s.delete(s.length() - 2, s.length());
 
-		pitchField.setText(s.toString());
+		pitchLabel.setText("Event List contents: "+s.toString());
 
 	}
 
@@ -410,6 +429,10 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		// Set event likelihood based on slider value
 		ne.setLikelihood(Double.valueOf(velSlider.getValue()) / 100.0);
 
+		// If we're updating the eventList, first remove the old event
+		if (index < nodeEventList.size())
+			nodeEventList.remove(index);
+
 		nodeEventList.add(index, ne);
 	}
 
@@ -427,11 +450,43 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	}
 	
 	
-	
+	protected void processKeyEvent(KeyEvent e) {
+		System.out.println("Bing!");
+		
+		switch (e.getKeyCode()) {
+		
+		case KeyEvent.VK_ESCAPE:
+			setVisible(false);
+			
+		default:
+			super.processKeyEvent(e);
+			
+		}
+	}
+
 
 	/******************
 	 * INTERNAL CLASSES 
 	 *****************/
+	
+	
+	private class primeBoxItemListener implements ItemListener {
+
+		public void itemStateChanged(ItemEvent e) {
+			node.setPrime(primeBox.getState());
+			node.refresh();
+		}
+
+	}
+	
+	private class sonBoxItemListener implements ItemListener {
+		
+		public void itemStateChanged(ItemEvent e) {
+			node.setLegato(sonBox.getState());
+			node.refresh();
+		}
+		
+	}
 
 	private class velSliderAdjustmentListener implements AdjustmentListener {
 
@@ -449,15 +504,6 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		}
 
 	}
-	
-	private class primeBoxItemListener implements ItemListener {
-
-		public void itemStateChanged(ItemEvent e) {
-			node.setPrime(primeBox.getState());
-			node.refresh();
-		}
-
-	}
 
 	private class forwardButtonActionListener implements ActionListener {
 
@@ -471,7 +517,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	private class backwardButtonActionListener implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
-			if (currEvent > 1)
+			if (currEvent >= 1)
 				loadEvent(--currEvent);
 		}
 
@@ -502,25 +548,16 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 				// Strip off any pitch descriptions from notename (e.g. " --- Middle C")
 				notename = notename.split(" ")[0];
 
-				// Do a stupid linear search, in order to preserve our holy interface MIDIConstants
-				int pitch = 0;
-				for (; pitch < PITCHES.length; pitch++) {
-					if (PITCHES[pitch].equals(notename))
-						break;
-				}
+				int pitch = MidiCommon.getPitchFromString(notename);
 
-				// pitch - 1, because REST is the first "pitch" for display in noteList, and this causes our MIDI int values to be off by +1
-				Note n = null;
-				if (0 == pitch) // A rest
-					n = new Note(REST, velSlider.getValue());
-				else
-					n = new Note(pitch - 1, velSlider.getValue());
+				Note n = new Note(pitch, velSlider.getValue());
 
 				notes.add(n);
 			}
 
-			saveEvent(nodeEventList.size(), new NodeEvent(notes));
-			loadEvent(nodeEventList.size());
+			int ins = nodeEventList.size();
+			saveEvent(ins, new NodeEvent(notes));
+			loadEvent(ins);
 		}
 
 	}
@@ -532,21 +569,11 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 			// Create a note list
 			ArrayList<Note> notes = new ArrayList<Note>();
 			for (String notename : pitchList.getSelectedItems()) {
-				// Do a stupid linear search, in order to preserve our holy interface MIDIConstants
-				int pitch = 0;
-				for (; pitch < PITCHES.length; pitch++) {
-					if (PITCHES[pitch].equals(notename))
-						break;
-				}
+				int pitch = MidiCommon.getPitchFromString(notename);
 
-				// pitch - 1, because REST is the first "pitch" for display in noteList, and this causes our MIDI int values to be off by +1
-				Note n = null;
-				if (0 == pitch)
-					n = new Note(REST, velSlider.getValue());
-				else
-					n = new Note(pitch - 1, velSlider.getValue());
-
+				Note n = new Note(pitch, velSlider.getValue());
 				notes.add(n);
+				
 			}
 
 			saveEvent(currEvent, new NodeEvent(notes));

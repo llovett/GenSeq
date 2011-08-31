@@ -23,28 +23,41 @@ public class NodeEvent implements MIDIConstants {
 	public static final int TYPE_CHORD = 1;
 	public static final int TYPE_REST = 2;
 	
+	private static final double DEFAULT_LIKELIHOOD = 1.0;
+	
 	private ArrayList<Note> notelist;
 	private double likelihood;
 	private int type;
 	
-	public NodeEvent(Note n) {
-		notelist = new ArrayList<Note>();
-		notelist.add(n);
+	public NodeEvent(ArrayList<Note> notelist, double likelihood) {
+		this.notelist = notelist;
+		this.likelihood = likelihood;
 		
-		type = TYPE_SINGLE_NOTE;
+		type = TYPE_CHORD;
 	}
 	
 	public NodeEvent(ArrayList<Note> notelist) {
-		this.notelist = notelist;
+		this(notelist, DEFAULT_LIKELIHOOD);
+	}
+	
+	public NodeEvent(Note n, double likelihood) {
+		notelist = new ArrayList<Note>();
+		notelist.add(n);
+		this.likelihood = likelihood;
 		
-		type = TYPE_CHORD;
+		type = TYPE_SINGLE_NOTE;
+	}
+
+	
+	public NodeEvent(Note n) {
+		this(n, DEFAULT_LIKELIHOOD);
 	}
 	
 	/**
 	 * Empty constructor for creating a "blank" event.
 	 */
 	public NodeEvent() {
-		this(new Note());
+		this(new Note(), DEFAULT_LIKELIHOOD);
 	}
 	
 	public ArrayList<Note> getNotes() {

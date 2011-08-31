@@ -38,6 +38,10 @@ public class Node extends DrawableObject implements MIDIConstants {
 	private static final int HIGHLIGHT_STROKE_RED = 200;
 	private static final int HIGHLIGHT_STROKE_GREEN = 200;
 	private static final int HIGHLIGHT_STROKE_BLUE = 0;
+	private static final int SELECT_HALO = 20;
+	private static final int SELECT_HALO_RED = 255;
+	private static final int SELECT_HALO_GREEN = 255;
+	private static final int SELECT_HALO_BLUE = 200;
 
 	/*** INTERNAL CONTROL / ATTRIBUTES ***/
 	// List of the edges incident to this node
@@ -47,12 +51,16 @@ public class Node extends DrawableObject implements MIDIConstants {
 
 	private int circuitID;	// Circuit identification number
 	private boolean prime;	// Whether or not the sequencer should begin playing with this node
+	private boolean legato; // True if other previous event's notes should be stopped first before this node responds.
 	private ArrayList<NodeEvent> eventList;	// List of pitches that may be played
-
+	private boolean selected;
 
 	/*** MIDI CONTROL ***/
 	private static Receiver midisend;
 
+	/*** GRAPHICAL FX ***/
+	private static PImage img;
+	
 	/**
 	 * CONSTRUCTOR
 	 * @param parent - PApplet that will do the rendering
@@ -72,11 +80,12 @@ public class Node extends DrawableObject implements MIDIConstants {
 		outboundEdges = new ArrayList<Edge>();
 
 		prime = false;
+		legato = true;
 		eventList = new ArrayList<NodeEvent>();
 
 		// Set up MIDI receiver
 		try {
-			midisend = ((GenSeq)parent).getMidiDevice().getReceiver();
+			midisend = MidiCommon.getMidiDevice().getReceiver();
 		} catch (Exception e) {
 
 			// If that failed, try again with the default receiver
@@ -92,6 +101,25 @@ public class Node extends DrawableObject implements MIDIConstants {
 
 		// Create an event to be played on this node. Make it a "REST"
 		eventList.add(new NodeEvent());
+		
+		// Do graphical setup
+		int imgw = getWidth() + SELECT_HALO;
+		int imgh = getHeight() + SELECT_HALO;
+		img = new PImage(imgw, imgh, PApplet.ARGB);
+		img.loadPixels();
+		for (int i=0; i<imgh; i++)
+			for (int j=0; j<imgw; j++) {
+				float dist = (float)Math.sqrt(Math.pow(i - (imgh/2.0), 2) + Math.pow(j - (imgw/2.0), 2));
+				img.pixels[i*imgw + j] = parent.color(SELECT_HALO_RED,
+						SELECT_HALO_GREEN,
+						SELECT_HALO_BLUE,
+						255.0f - constrain(
+								(float)(  2.0f*255.0f*dist/(float)(imgw >= imgh? imgw : imgh)),
+								0.0f, 255.0f)
+								);
+			}
+		img.updatePixels();
+		selected = false;
 	}
 
 	/**
@@ -104,6 +132,12 @@ public class Node extends DrawableObject implements MIDIConstants {
 		midisend = r;
 	}
 
+	
+	
+	
+	
+	
+	
 	/**
 	 * render() - draw this object
 	 *
@@ -113,10 +147,20 @@ public class Node extends DrawableObject implements MIDIConstants {
 
 		parent.pushMatrix();
 		parent.translate(x, y);
+		
+		if (selected) {
+			parent.imageMode(PApplet.CENTER);
+			parent.image(img, 0, 0);
+		}
+		
 		parent.ellipse(0, 0, w, w);
 		parent.popMatrix();
 	}
 
+	
+	
+	
+	
 	/**
 	 * respond(NodeEvent lastEvent) - what to do when this node is reached.
 	 *
@@ -270,6 +314,24 @@ public class Node extends DrawableObject implements MIDIConstants {
 	}
 
 	/**
+	 * isLegato()
+	 * 
+	 * @return True if this node should stop the previous event's notes before responding.
+	 */
+	public boolean isLegato() {
+		return legato;
+	}
+	
+	/**
+	 * setLegato()
+	 * 
+	 * @param legato This node's legato setting.
+	 */
+	public void setLegato(boolean legato) {
+		this.legato = legato;
+	}
+	
+	/**
 	 * getNotes()
 	 * 
 	 * @return - A list of notes that this node may represent.
@@ -317,6 +379,17 @@ public class Node extends DrawableObject implements MIDIConstants {
 	}
 
 	/**
+	 * select() - Show this node as selected
+	 */
+	public void select() {
+		selected = true;
+	}
+	
+	public void deselect() {
+		selected = false;
+	}
+	
+	/**
 	 * equals()
 	 * 
 	 * Returns true if this node is equal with respect to graphical position
@@ -332,9 +405,11 @@ public class Node extends DrawableObject implements MIDIConstants {
 	}
 
 	public int compareTo(Node n) {
-		double thisDist = Math.sqrt(Math.pow(getX(), 2) + Math.pow(getY(), 2));
-		double otherDist = Math.sqrt(Math.pow(n.getX(), 2) + Math.pow(n.getY(), 2));
-		return (int)(thisDist - otherDist);
+		//double thisDist = Math.sqrt(Math.pow(getX(), 2) + Math.pow(getY(), 2));
+		//double otherDist = Math.sqrt(Math.pow(n.getX(), 2) + Math.pow(n.getY(), 2));		
+		//return (int)(thisDist - otherDist);
+		
+		return getX() - n.getX();
 	}
 
 
@@ -362,6 +437,14 @@ public class Node extends DrawableObject implements MIDIConstants {
 		setColor(HIGHLIGHT_RED, HIGHLIGHT_GREEN, HIGHLIGHT_BLUE);
 		setStrokeColor(HIGHLIGHT_STROKE_RED, HIGHLIGHT_STROKE_GREEN, HIGHLIGHT_STROKE_BLUE);
 	}
+	
+	private float constrain(float x, float low, float high) {
+		float r1 = (x < low? low : x);
+		float r2 = (high < r1? high : r1);
+		return r2;
+	}
+	
+	
 
 	//	private void setAttributes() {
 	//		// Whether or not this node is prime

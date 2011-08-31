@@ -39,6 +39,16 @@ public class Score implements ActionListener, MouseListener {
 	private static final int DEFAULT_STROKE_GREEN = 200;
 	private static final int DEFAULT_STROKE_BLUE = 255;
 	private static final int DEFAULT_STROKE_WEIGHT = 2;
+	
+	private static final int SELECTION_RED = 200;
+	private static final int SELECTION_GREEN = 255;
+	private static final int SELECTION_BLUE = 100;
+	private static final int SELECTION_ALPHA = 100;
+	private static final int SELECTION_STROKE_RED = 100;
+	private static final int SELECTION_STROKE_GREEN = 200;
+	private static final int SELECTION_STROKE_BLUE = 0;
+	private static final int SELECTION_STROKE_ALPHA = 100;
+	
 	private static final int DEFAULT_WIDTH = 600;
 	private static final int DEFAULT_HEIGHT = 600;
 	
@@ -48,7 +58,11 @@ public class Score implements ActionListener, MouseListener {
 	private static final int CLICK_ACCURACY = 20;
 	private static NodeComparator ncomp;
 	private static EdgeComparator ecomp;
-	private Node activeNode;
+	private ArrayList<Node> activeNodes;
+	private boolean activeNodeLock;	// Locks using activeNodes while it's still being modified
+	
+	/*** OBJECTS THAT SHOULD BE DRAWN (BUT NOT NODES/EDGES) ***/
+	SelectRect sr;
 	
 	/*** EXTERNAL REFERENCES ***/
 	private GenSeq parent;
@@ -73,7 +87,13 @@ public class Score implements ActionListener, MouseListener {
 		ncomp = new NodeComparator();
 		ecomp = new EdgeComparator();
 		
-		activeNode = null;
+		activeNodes = new ArrayList<Node>();
+		activeNodeLock = false;
+		
+		// Build drawable objects for user feedback
+		sr = new SelectRect(parent);
+		sr.setColor(SELECTION_RED, SELECTION_GREEN, SELECTION_BLUE);
+		sr.setStrokeColor(SELECTION_STROKE_RED, SELECTION_STROKE_GREEN, SELECTION_STROKE_BLUE);
 		
 		constructComponents();
 	}
@@ -154,7 +174,7 @@ public class Score implements ActionListener, MouseListener {
 	
 	public void render() {
 		try {
-			parent.background(255);
+			parent.background(150);
 
 			for (Edge e : edges) {
 				e.render();
@@ -162,6 +182,10 @@ public class Score implements ActionListener, MouseListener {
 			for (Node n : nodes) {
 				n.render();
 			}
+			
+			// Drawable objects that need to be rendered
+			sr.render();
+			
 		} catch (ConcurrentModificationException e) {
 			// TODO: Can we prevent this from happening, rather than catching
 			// the exception here?
@@ -183,39 +207,6 @@ public class Score implements ActionListener, MouseListener {
 		
 	}	
 	
-	
-	
-	
-	/*****************
-	 * PRIVATE METHODS
-	 *****************/
-	
-	private double distance(double x1, double y1, double x2, double y2) {
-		return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 -y2, 2));
-	}
-	
-	
-	
-	
-	/*******************
-	 * INTERNAL CLASSES
-	 ******************/
-	
-	private class EdgeComparator implements Comparator {
-		
-		public int compare(Object o1, Object o2) {
-			return ((Edge)o1).compareTo((Edge)o2);
-		}
-		
-	}
-	
-	private class NodeComparator implements Comparator {
-		
-		public int compare(Object o1, Object o2) {
-			return ((Node)o1).compareTo((Node)o2);
-		}
-		
-	}
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -261,9 +252,20 @@ public class Score implements ActionListener, MouseListener {
 		prevX = me.getX();
 		prevY = me.getY();
 		
-		//if (parent.getMode() == GenSeq.MOVE_NODES) {
-			activeNode = findNodeAtPoint(prevX, prevY);
-		//}
+		// Clear any visual fx on the active nodes that may be happenening
+		if (! activeNodeLock) {
+			for (Node n : activeNodes)
+				n.deselect();
+
+			activeNodes.clear();
+		} else {
+			// Lift the lock
+			activeNodeLock = false;
+		}
+		
+		Node selNode = findNodeAtPoint(prevX, prevY);
+		if (null != selNode)
+			activeNodes.add(selNode);
 	}
 
 	@Override
@@ -289,7 +291,10 @@ public class Score implements ActionListener, MouseListener {
 				// search / delete & do other things quickly.
 				Collections.sort(edges, ecomp);
 			}
-		}		
+		}
+		
+		// Hide the selection rectangle
+		sr.setVisible(false);
 	}
 	
 	/**
@@ -303,16 +308,151 @@ public class Score implements ActionListener, MouseListener {
 	 */
 	public void mouseDragged(int mX, int mY) {
 		
+		// If we can move nodes...
 		if (parent.getMode() == GenSeq.MOVE_NODES ||
 				(parent.getMode() == GenSeq.CREATE_NODES && parent.mouseButton == parent.CENTER)) {
-			if (null != activeNode) {
-				activeNode.setX(mX);
-				activeNode.setY(mY);
+			// If there are already nodes selected...
+			if (null != activeNodes && activeNodes.size() > 0 && (! activeNodeLock)) {
 				
-				// Resize the edges
-				for (Edge e : activeNode.getEdges())
-					e.calculateLength();
+				for (Node n : activeNodes) {
+					n.setX(n.getX() + (mX - prevX));
+					n.setY(n.getY() + (mY - prevY));
+					
+					// Resize the edges
+					for (Edge e : n.getEdges())
+						e.calculateLength();
+					
+				}
+				
+				prevX = mX;
+				prevY = mY;
+				
 			}
+			// Otherwise, if there are no nodes selected...
+			else {
+				// Lock the activeNodes list, since we'll be adding an indefinite number of nodes to this list.
+				activeNodeLock = true;
+				
+				if (! sr.isVisible()) {
+					sr.setAlpha(SELECTION_ALPHA);
+					sr.setStrokeAlpha(SELECTION_STROKE_ALPHA);
+				}
+				
+				sr.setBounds(prevX, prevY, mX, mY);
+				
+				// Show selected nodes
+				int startX = sr.getX();
+				int stopX = sr.getX2();
+				
+				// Find nodes within selected area
+				for (Node n : nodes) {
+					if (n.getX() < startX) continue;
+					if (n.getX() <= stopX && n.getY() >= sr.getY() && n.getY() <= sr.getY2())
+						activeNodes.add(n);
+					else if (n.getX() > stopX)
+						break;
+				}
+				
+				// Highlight selected nodes
+				for (Node n : activeNodes)
+					n.select();
+				
+			}
+		}
+		
+	}
+	
+	
+	
+	
+	
+	/*****************
+	 * PRIVATE METHODS
+	 *****************/
+	
+	private double distance(double x1, double y1, double x2, double y2) {
+		return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 -y2, 2));
+	}
+	
+	
+	
+	
+	
+	/*******************
+	 * INTERNAL CLASSES
+	 ******************/
+	
+	private class EdgeComparator implements Comparator {
+		
+		public int compare(Object o1, Object o2) {
+			return ((Edge)o1).compareTo((Edge)o2);
+		}
+		
+	}
+	
+	private class NodeComparator implements Comparator {
+		
+		public int compare(Object o1, Object o2) {
+			return ((Node)o1).compareTo((Node)o2);
+		}
+		
+	}
+	
+	private class SelectRect extends DrawableObject {
+		
+		private int x2, y2;
+		
+		public SelectRect(PApplet parent) {
+			super(parent);
+		}
+		
+		public void setX2(int x2) {
+			if (x2 < x) {
+				int buff = x;
+				x = x2;
+				this.x2 = buff;				
+			}
+			else
+				this.x2 = x2;
+		}
+		
+		public void setY2(int y2) {
+			if (y2 < y) {
+				int buff = y;
+				y = y2;
+				this.y2 = buff;
+			}
+			else
+				this.y2 = y2;
+		}
+		
+		public int getX2() {
+			return x2;
+		}
+		
+		public int getY2() {
+			return y2;
+		}
+		
+		public void setBounds(int x, int y, int x2, int y2) {
+			this.x = (x < x2? x : x2);
+			this.y = (y < y2? y : y2);
+			this.x2 = (x2 > x? x2 : x);
+			this.y2 = (y2 > y? y2 : y);
+		}
+		
+		public int getWidth() {
+			return x2 - x;
+		}
+		
+		public int getHeight() {
+			return y2 - y;
+		}
+		
+		public void render() {
+			setupDrawPrefs();
+			parent.rectMode(parent.CORNERS);
+			parent.rect(x, y, x2, y2);
 		}
 		
 	}

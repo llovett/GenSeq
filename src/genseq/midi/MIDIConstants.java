@@ -40,118 +40,118 @@ public interface MIDIConstants {
 	public static final int AS1 = 22;
 	public static final int B1 = 23;
 
-	public static final int C3 = 24;
-	public static final int CS3 = 25;
-	public static final int D3 = 26;
-	public static final int DS3 = 27;
-	public static final int E3 = 28;
-	public static final int F3 = 29;
-	public static final int FS3 = 30;
-	public static final int G3 = 31;
-	public static final int GS3 = 32;
-	public static final int A3 = 33;
-	public static final int AS3 = 34;
-	public static final int B3 = 35;
+	public static final int C2 = 24;
+	public static final int CS2 = 25;
+	public static final int D2 = 26;
+	public static final int DS2 = 27;
+	public static final int E2 = 28;
+	public static final int F2 = 29;
+	public static final int FS2 = 30;
+	public static final int G2 = 31;
+	public static final int GS2 = 32;
+	public static final int A2 = 33;
+	public static final int AS2 = 34;
+	public static final int B2 = 35;
 
-	public static final int C4 = 36;
-	public static final int CS4 = 37;
-	public static final int D4 = 38;
-	public static final int DS4 = 39;
-	public static final int E4 = 40;
-	public static final int F4 = 41;
-	public static final int FS4 = 42;
-	public static final int G4 = 43;
-	public static final int GS4 = 44;
-	public static final int A4 = 45;
-	public static final int AS4 = 46;
-	public static final int B4 = 47;
+	public static final int C3 = 36;
+	public static final int CS3 = 37;
+	public static final int D3 = 38;
+	public static final int DS3 = 39;
+	public static final int E3 = 40;
+	public static final int F3 = 41;
+	public static final int FS3 = 42;
+	public static final int G3 = 43;
+	public static final int GS3 = 44;
+	public static final int A3 = 45;
+	public static final int AS3 = 46;
+	public static final int B3 = 47;
 
-	public static final int C5 = 48;
-	public static final int CS5 = 49;
-	public static final int D5 = 50;
-	public static final int DS5 = 51;
-	public static final int E5 = 52;
-	public static final int F5 = 53;
-	public static final int FS5 = 54;
-	public static final int G5 = 55;
-	public static final int GS5 = 56;
-	public static final int A5 = 57;
-	public static final int AS5 = 58;
-	public static final int B5 = 59;
+	public static final int C4 = 48;
+	public static final int CS4 = 49;
+	public static final int D4 = 50;
+	public static final int DS4 = 51;
+	public static final int E4 = 52;
+	public static final int F4 = 53;
+	public static final int FS4 = 54;
+	public static final int G4 = 55;
+	public static final int GS4 = 56;
+	public static final int A4 = 57;
+	public static final int AS4 = 58;
+	public static final int B4 = 59;
 
-	public static final int C6 = 60;
-	public static final int CS6 = 61;
-	public static final int D6 = 62;
-	public static final int DS6 = 63;
-	public static final int E6 = 64;
-	public static final int F6 = 65;
-	public static final int FS6 = 66;
-	public static final int G6 = 67;
-	public static final int GS6 = 68;
-	public static final int A6 = 69;
-	public static final int AS6 = 70;
-	public static final int B6 = 71;
+	public static final int C5 = 60;
+	public static final int CS5 = 61;
+	public static final int D5 = 62;
+	public static final int DS5 = 63;
+	public static final int E5 = 64;
+	public static final int F5 = 65;
+	public static final int FS5 = 66;
+	public static final int G5 = 67;
+	public static final int GS5 = 68;
+	public static final int A5 = 69;
+	public static final int AS5 = 70;
+	public static final int B5 = 71;
 
-	public static final int C7 = 72;
-	public static final int CS7 = 73;
-	public static final int D7 = 74;
-	public static final int DS7 = 75;
-	public static final int E7 = 76;
-	public static final int F7 = 77;
-	public static final int FS7 = 78;
-	public static final int G7 = 79;
-	public static final int GS7 = 80;
-	public static final int A7 = 81;
-	public static final int AS7 = 82;
-	public static final int B7 = 83;
+	public static final int C6 = 72;
+	public static final int CS6 = 73;
+	public static final int D6 = 74;
+	public static final int DS6 = 75;
+	public static final int E6 = 76;
+	public static final int F6 = 77;
+	public static final int FS6 = 78;
+	public static final int G6 = 79;
+	public static final int GS6 = 80;
+	public static final int A6 = 81;
+	public static final int AS6 = 82;
+	public static final int B6 = 83;
 
-	public static final int C8 = 84;
-	public static final int CS8 = 85;
-	public static final int D8 = 86;
-	public static final int DS8 = 87;
-	public static final int E8 = 88;
-	public static final int F8 = 89;
-	public static final int FS8 = 90;
-	public static final int G8 = 91;
-	public static final int GS8 = 92;
-	public static final int A8 = 93;
-	public static final int AS8 = 94;
-	public static final int B8 = 95;
+	public static final int C7 = 84;
+	public static final int CS7 = 85;
+	public static final int D7 = 86;
+	public static final int DS7 = 87;
+	public static final int E7 = 88;
+	public static final int F7 = 89;
+	public static final int FS7 = 90;
+	public static final int G7 = 91;
+	public static final int GS7 = 92;
+	public static final int A7 = 93;
+	public static final int AS7 = 94;
+	public static final int B7 = 95;
 
-	public static final int C9 = 96;
-	public static final int CS9 = 97;
-	public static final int D9 = 98;
-	public static final int DS9 = 99;
-	public static final int E9 = 100;
-	public static final int F9 = 101;
-	public static final int FS9 = 102;
-	public static final int G9 = 103;
-	public static final int GS9 = 104;
-	public static final int A9 = 105;
-	public static final int AS9 = 106;
-	public static final int B9 = 107;
+	public static final int C8 = 96;
+	public static final int CS8 = 97;
+	public static final int D8 = 98;
+	public static final int DS8 = 99;
+	public static final int E8 = 100;
+	public static final int F8 = 101;
+	public static final int FS8 = 102;
+	public static final int G8 = 103;
+	public static final int GS8 = 104;
+	public static final int A8 = 105;
+	public static final int AS8 = 106;
+	public static final int B8 = 107;
 
-	public static final int C10 = 108;
-	public static final int CS10 = 109;
-	public static final int D10 = 110;
-	public static final int DS10 = 111;
-	public static final int E10 = 112;
-	public static final int F10 = 113;
-	public static final int FS10 = 114;
-	public static final int G10 = 115;
-	public static final int GS10 = 116;
-	public static final int A10 = 117;
-	public static final int AS10 = 118;
-	public static final int B10 = 119;
+	public static final int C9 = 108;
+	public static final int CS9 = 109;
+	public static final int D9 = 110;
+	public static final int DS9 = 111;
+	public static final int E9 = 112;
+	public static final int F9 = 113;
+	public static final int FS9 = 114;
+	public static final int G9 = 115;
+	public static final int GS9 = 116;
+	public static final int A9 = 117;
+	public static final int AS9 = 118;
+	public static final int B9 = 119;
 
-	public static final int C11 = 120;
-	public static final int CS11 = 121;
-	public static final int D11 = 122;
-	public static final int DS11 = 123;
-	public static final int E11 = 124;
-	public static final int F11 = 125;
-	public static final int FS11 = 126;
-	public static final int G11 = 127;
+	public static final int C10 = 120;
+	public static final int CS10 = 121;
+	public static final int D10 = 122;
+	public static final int DS10 = 123;
+	public static final int E10 = 124;
+	public static final int F10 = 125;
+	public static final int FS10 = 126;
+	public static final int G10 = 127;
 
 	// Rest
 	public static final int REST = 1000;
@@ -183,7 +183,19 @@ public interface MIDIConstants {
 			"A1",
 			"A#1",
 			"B1",
-			"C3",
+			"C2",
+			"C#2",
+			"D2",
+			"D#2",
+			"E2",
+			"F2",
+			"F#2",
+			"G2",
+			"G#2",
+			"A2",
+			"A#2",
+			"B2",
+			"C3 --- \"Low C\"",
 			"C#3",
 			"D3",
 			"D#3",
@@ -195,7 +207,7 @@ public interface MIDIConstants {
 			"A3",
 			"A#3",
 			"B3",
-			"C4 --- \"Middle C\"",
+			"C4",
 			"C#4",
 			"D4",
 			"D#4",
@@ -207,7 +219,7 @@ public interface MIDIConstants {
 			"A4 --- \"A 440Hz\"",
 			"A#4",
 			"B4",
-			"C5",
+			"C5 --- \"Middle C\"",
 			"C#5",
 			"D5",
 			"D#5",
@@ -231,7 +243,7 @@ public interface MIDIConstants {
 			"A6",
 			"A#6",
 			"B6",
-			"C7",
+			"C7 --- \"High C\"",
 			"C#7",
 			"D7",
 			"D#7",
@@ -267,18 +279,6 @@ public interface MIDIConstants {
 			"A9",
 			"A#9",
 			"B9",
-			"C10",
-			"C#10",
-			"D10",
-			"D#10",
-			"E10",
-			"F10",
-			"F#10",
-			"G10",
-			"G#10",
-			"A10",
-			"A#10",
-			"B10",
 			"C10",
 			"C#10",
 			"D10",

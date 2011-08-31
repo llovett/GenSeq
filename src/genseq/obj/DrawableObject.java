@@ -12,13 +12,18 @@ public abstract class DrawableObject {
 
 	// Stroke width, bgcolor, stroke color
 	protected int strokeWeight;
-	protected int r,g,b;
-	protected int sr,sg,sb;
+	protected int r,g,b,a;
+	protected int sr,sg,sb,sa;
 
 	public DrawableObject(PApplet parent) {
 		this.parent = parent;
 		r = g = b = sr = sg = sb = 0;
 		w = h = x = y = 0;
+		
+		// Set alpha values so that we're opaque
+		a = 255;
+		sa = 255;
+		
 		strokeWeight = 0;
 	}
 
@@ -96,6 +101,25 @@ public abstract class DrawableObject {
 		this.sg = sg;
 		this.sb = sb;
 	}
+	
+	public void setAlpha(int alpha) {
+		this.a = alpha;
+	}
+	
+	public void setStrokeAlpha(int strokeAlpha) {
+		this.sa = strokeAlpha;
+	}
+	
+	public void setVisible(boolean vis) {
+		if (vis && (a == 0 && sa == 0))
+			a = sa = 255;
+		else
+			a = sa = 0;
+	}
+	
+	public boolean isVisible() {
+		return (a != 0 || sa != 0);
+	}
 
 	//     public void setStrokeColor(Object c) {
 	// 	if (! (c instanceof processing.core.color)) return;
@@ -111,8 +135,8 @@ public abstract class DrawableObject {
 	 * object properly.
 	 **/
 	public void setupDrawPrefs() {
-		parent.fill(r, g, b);
-		parent.stroke(sr, sg, sb);
+		parent.fill(r, g, b, a);
+		parent.stroke(sr, sg, sb, sa);
 		parent.strokeWeight(strokeWeight);
 	}
 	

@@ -1,0 +1,12 @@
+/**
+ * MidiCommon.java
+ * 
+ * Hosts MIDI objects and provides essential MIDI services to all classes.
+ * 
+ */
+
+package genseq.midi;
+
+public final class MidiCommon {
+
+}

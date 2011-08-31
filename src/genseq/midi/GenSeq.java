@@ -54,9 +54,13 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 	private static int currentMode;
 	public static final int CREATE_NODES = 0;
 	public static final int MOVE_NODES = 1;
+	// List of scores the user can draw on.
+	private static ArrayList<Score> scores;
+	// Previous x, y position of a mouse click, respectively
+	private static int prevX, prevY;
+	
 	
 	/*** MIDI CONTROL ***/
-	private static MidiDevice midiDevice;
 	public static final double TEMPO = 120.0;
 	public static final int SMALL_SUBDIVISION = 64;
 	// number_small_subdivisions * TIME_EDGE_RATIO = edge_pixels_traversed
@@ -70,13 +74,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 	// Reference to the Frame hosting this PApplet
 	@SuppressWarnings("unused")
 	private static GenSeqWindow parent;
-	
-	/*** GLOBAL DATA ***/
-	// List of scores the user can draw on.
-	private static ArrayList<Score> scores;
-	// Previous x, y position of a mouse click, respectively
-	private static int prevX, prevY;
-	
+		
 	
 	/*************
 	 * Init. stuff
@@ -311,26 +309,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 			n.refresh();
 		
 	}
-	
-	/**
-	 * getMidiDevice() - Get the MIDI device used by this GenSeq application
-	 * 
-	 * @return - A MIDI device.
-	 */
-	public MidiDevice getMidiDevice() {
-		return midiDevice;
-	}
-	
-	/**
-	 * setMidiDevice() - Sets the MIDI device used by GenSeq.
-	 * 
-	 * @param m - The new MIDI device to use.
-	 * @throws MidiUnavailableException 
-	 */
-	public void setMidiDevice(MidiDevice m) throws MidiUnavailableException {
-		this.midiDevice = m;
-		Node.setReceiver(midiDevice.getReceiver());
-	}
+
 	
 	
 	/*****************

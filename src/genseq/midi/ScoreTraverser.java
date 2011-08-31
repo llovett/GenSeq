@@ -75,15 +75,10 @@ public class ScoreTraverser extends Thread {
 	public void run() {
 		if (done) return;
 		
-		System.out.println("Running!");
-		
-		
 		// Tasks to perform at the end of an edge
 		if (EDGE_WAIT == status &&
 				null != curre &&
 				edgeDist >= curre.getLength()) {
-			
-			System.out.println("Finishing an edge...");
 
 			// Stop playing the last node
 			try {
@@ -102,7 +97,6 @@ public class ScoreTraverser extends Thread {
 
 		// Node tasks
 		if (NODE_PLAY == status) {
-			System.out.println("Playing a node...");
 			
 			/** PERFORM NODE ACTIONS **/
 			try {
@@ -132,7 +126,7 @@ public class ScoreTraverser extends Thread {
 
 		// TODO: Tasks to perform while waiting at an edge
 		if (EDGE_WAIT == status) {
-			System.out.println("Waiting on an edge... (edgeDist is "+edgeDist+")");
+			
 		}
 	}
 	
