@@ -374,7 +374,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 			velSlider.setValue(velocity);
 
 		}
-		lhoodSlider.setValue((int)(e.getLikelihood()*100));
+		lhoodSlider.setValue((int)(e.getLikelihood()*100.0));
 
 		currEvent = eventno;
 
@@ -400,7 +400,6 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 	}
 
 
-	// TODO: Do we need this method?
 	/**
 	 * notesEditied()
 	 * 
@@ -424,10 +423,9 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 			if (REST == n.getPitch())
 				isRest = true;
 		}
-		if (isRest) ne = new NodeEvent(new Note(REST));
-		
-		// Set event likelihood based on slider value
-		ne.setLikelihood(Double.valueOf(velSlider.getValue()) / 100.0);
+		if (isRest && NodeEvent.TYPE_REST != ne.getType()) {
+			ne = new NodeEvent(new Note(REST));
+		}
 
 		// If we're updating the eventList, first remove the old event
 		if (index < nodeEventList.size())
@@ -449,7 +447,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 		setVisible(false);
 	}
 	
-	
+	// TODO: This method is never called...
 	protected void processKeyEvent(KeyEvent e) {
 		System.out.println("Bing!");
 		
@@ -556,7 +554,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 			}
 
 			int ins = nodeEventList.size();
-			saveEvent(ins, new NodeEvent(notes));
+			saveEvent(ins, new NodeEvent(notes, lhoodSlider.getValue()/100.0));
 			loadEvent(ins);
 		}
 
@@ -576,7 +574,7 @@ public class NodeAttributesWindow extends Frame implements MIDIConstants {
 				
 			}
 
-			saveEvent(currEvent, new NodeEvent(notes));
+			saveEvent(currEvent, new NodeEvent(notes, lhoodSlider.getValue()/100.0));
 			loadEvent(currEvent);
 		}
 

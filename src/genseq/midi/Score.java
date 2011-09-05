@@ -43,11 +43,12 @@ public class Score implements ActionListener, MouseListener {
 	private static final int SELECTION_RED = 200;
 	private static final int SELECTION_GREEN = 255;
 	private static final int SELECTION_BLUE = 100;
-	private static final int SELECTION_ALPHA = 100;
+	private static final int SELECTION_ALPHA = 50;
 	private static final int SELECTION_STROKE_RED = 100;
 	private static final int SELECTION_STROKE_GREEN = 200;
 	private static final int SELECTION_STROKE_BLUE = 0;
 	private static final int SELECTION_STROKE_ALPHA = 100;
+	private static final int SELECTION_STROKE_WEIGHT = 5;
 	
 	private static final int DEFAULT_WIDTH = 600;
 	private static final int DEFAULT_HEIGHT = 600;
@@ -55,11 +56,14 @@ public class Score implements ActionListener, MouseListener {
 	/*** INTERNAL CONTROL ***/
 	// How accurate does the user have to be with the mouse in order
 	// to select an item (in pixels)?
-	private static final int CLICK_ACCURACY = 20;
+	private static final int CLICK_ACCURACY_NODE = 20;
+	private static final int CLICK_ACCURACY_EDGE = 10;
 	private static NodeComparator ncomp;
 	private static EdgeComparator ecomp;
 	private ArrayList<Node> activeNodes;
+	private ArrayList<Edge> activeEdges;
 	private boolean activeNodeLock;	// Locks using activeNodes while it's still being modified
+	private boolean activeEdgeLock; // Locks using activeEdges while it's still being modified
 	
 	/*** OBJECTS THAT SHOULD BE DRAWN (BUT NOT NODES/EDGES) ***/
 	SelectRect sr;
@@ -89,10 +93,13 @@ public class Score implements ActionListener, MouseListener {
 		
 		activeNodes = new ArrayList<Node>();
 		activeNodeLock = false;
+		activeEdges = new ArrayList<Edge>();
+		activeEdgeLock = false;
 		
 		// Build drawable objects for user feedback
 		sr = new SelectRect(parent);
 		sr.setColor(SELECTION_RED, SELECTION_GREEN, SELECTION_BLUE);
+		sr.setStrokeWeight(SELECTION_STROKE_WEIGHT);
 		sr.setStrokeColor(SELECTION_STROKE_RED, SELECTION_STROKE_GREEN, SELECTION_STROKE_BLUE);
 		
 		constructComponents();
@@ -119,19 +126,52 @@ public class Score implements ActionListener, MouseListener {
 	 */
 	public Node removeNode(int x, int y) {
 		Node target = findNodeAtPoint(x, y);
-		if (null != target) {
-			// Remove the edges connected to the deleted node
-			ArrayList<Edge> targetedEdges = target.getEdges();
-			Collections.sort(targetedEdges, ecomp);
-			
-			for (Edge edge : targetedEdges) {
-				edges.remove(edge);
-			}
-			nodes.remove(target);
-			
-		}
+		
+		removeNode(target);
 		
 		return target;
+	}
+	
+	/**
+	 * removeNode(Node n) - Remove n from the nodes list if it exists.
+	 * 
+	 * @param n - Node to remove
+	 * @return True if the nodes list was changed, false otherwise.
+	 */
+	public boolean removeNode(Node n) {
+		if (null == n) return false;
+		
+		for (Edge e : n.getEdges())
+			edges.remove(e);
+		
+		Collections.sort(edges, ecomp);
+		
+		return nodes.remove(n);
+	}
+	
+	/**
+	 * removeEdge(int x, int y) - Remove the edge that passes through the point at (x, y)
+	 * 
+	 * @param x - An x-coordinate of a point that the edge passes through.
+	 * @param y - A y-coordinate of a point that the edge passes through.
+	 * 
+	 * @return The edge that was removed.
+	 */
+	public Edge removeEdge(int x, int y) {
+		Edge e = findEdgeAtPoint(x,y);
+		edges.remove(e);
+		
+		return e;
+	}
+	
+	/**
+	 * removeEdge(Node e) - Remove e from the edges list if it exists.
+	 * 
+	 * @param e - Edge to remove
+	 * @return True if the edges list was changed, false otherwise.
+	 */
+	public boolean removeEdge(Edge e) {
+		return edges.remove(e);
 	}
 	
 	/**
@@ -149,12 +189,76 @@ public class Score implements ActionListener, MouseListener {
 		// Iterate through the nodes, checking distances
 		for (Node n : nodes) {
 			double dist = distance(n.getX(), n.getY(), x, y); 
-			if (dist <= CLICK_ACCURACY && dist < closestDistance) {
+			if (dist <= CLICK_ACCURACY_NODE && dist < closestDistance) {
 				result = n;
 				closestDistance = dist;
 			}
 		}
 		return result;
+	}
+	
+	/**
+	 * findEdgeAtPoint
+	 * 
+	 * @param x - x coordinate
+	 * @param y - y coordinate
+	 * @return The edge closest to the point (x,y) such that a line perpendicular to the edge
+	 * from the mouse intersects the edge.
+	 */
+	public Edge findEdgeAtPoint(double x, double y) {
+		Edge target = null;
+		
+		// This will hold the slopes of the calculated lines
+		double closestDistance = 100000000.0;
+			
+		for (Edge e : edges) {
+			double ex1 = e.getSource().getX();
+			double ey1 = e.getSource().getY();
+			double ex2 = e.getDestination().getX();
+			double ey2 = e.getDestination().getY();
+			
+			double dY = (ey1 - ey2);
+			double dX = (ex1 - ex2);
+			
+			double eyi = ey1 - (dY/dX)*ex1;
+			double myi = y - (-dX/dY)*x;
+			
+			double edgeSlope = dY/dX;
+			double clickSlope = -dX/dY;
+			
+			double xi, yi;
+
+			// Deal with clickSlope being zero
+			if (0.0 == clickSlope) {
+				xi = ex1;
+				yi = y;
+			}
+			else {
+				xi = (eyi - myi)/((1 - (edgeSlope/clickSlope))*clickSlope);
+				yi = edgeSlope*xi + eyi;
+			}
+			
+			// Check to see if (xi,yi) is actually on the edge
+			if (! (xi > (ex1 < ex2? ex1 : ex2) &&
+					xi < (ex1 > ex2? ex1 : ex2) &&
+					yi > (ey1 < ey2? ey1 : ey2)	&&
+					yi < (ey1 > ey2? ey1 : ey2)))
+				continue;
+			
+			double dist = distance(xi,yi,x,y);
+			
+			if (dist < closestDistance) {
+				target = e;
+				closestDistance = dist;
+			}
+		}
+		
+		
+		// No dice, if click is still too far away
+		if (closestDistance > CLICK_ACCURACY_EDGE)
+			target = null;
+		
+		return target;
 	}
 	
 	/**
@@ -166,6 +270,34 @@ public class Score implements ActionListener, MouseListener {
 		return nodes;
 	}
 	
+	/**
+	 * getEdges()
+	 * 
+	 * @return - A list of all the edges on this score.
+	 */
+	public ArrayList<Edge> getEdges() {
+		return edges;
+	}
+	
+	/**
+	 * getSelectedNodes()
+	 * 
+	 * @return - A list of all the nodes that are currently selected ("active" nodes)
+	 */
+	public ArrayList<Node> getSelectedNodes() {
+		Collections.sort(activeNodes, ncomp);
+		return activeNodes;
+	}
+	
+	/**
+	 * getSelectedEdges()
+	 * 
+	 * @return - A list of all the edges that are currently selected ("active" edges)
+	 */
+	public ArrayList<Edge> getSelectedEdges() {
+		return activeEdges;
+	}
+	
 	/*******************************************************
 	 * DRAW LOOP.
 	 * 
@@ -175,16 +307,17 @@ public class Score implements ActionListener, MouseListener {
 	public void render() {
 		try {
 			parent.background(150);
-
+			
+			// Drawable objects that need to be rendered
+			sr.render();
+			
 			for (Edge e : edges) {
 				e.render();
 			}
 			for (Node n : nodes) {
 				n.render();
 			}
-			
-			// Drawable objects that need to be rendered
-			sr.render();
+
 			
 		} catch (ConcurrentModificationException e) {
 			// TODO: Can we prevent this from happening, rather than catching
@@ -217,7 +350,7 @@ public class Score implements ActionListener, MouseListener {
 			if (me.getButton() == MouseEvent.BUTTON1) {
 
 
-				if (distance(me.getX(), me.getY(), prevX, prevY) < CLICK_ACCURACY) {
+				if (distance(me.getX(), me.getY(), prevX, prevY) < CLICK_ACCURACY_NODE) {
 					nodes.add(new Node(parent, nodes.size(), me.getX(), me.getY()));
 
 					// Keep our lists of nodes sorted, so we can
@@ -251,27 +384,57 @@ public class Score implements ActionListener, MouseListener {
 	public void mousePressed(MouseEvent me) {
 		prevX = me.getX();
 		prevY = me.getY();
+
+		Node selNode = null;	// A node that may potentially be selected
+		Edge selEdge = null;	// An edge that may potentially be selected
 		
-		// Clear any visual fx on the active nodes that may be happenening
+		// Clear any visual FX on the active nodes that may be happening
 		if (! activeNodeLock) {
 			for (Node n : activeNodes)
 				n.deselect();
 
 			activeNodes.clear();
+			selNode = findNodeAtPoint(prevX, prevY);
+			if (null != selNode) {
+				// If we're in a moving sort of mood...
+				if (parent.getMode() == GenSeq.MOVE_NODES || parent.mouseButton == PApplet.CENTER)
+					selNode.select();
+				
+				activeNodes.add(selNode);
+			}
+			
 		} else {
 			// Lift the lock
 			activeNodeLock = false;
 		}
-		
-		Node selNode = findNodeAtPoint(prevX, prevY);
-		if (null != selNode)
-			activeNodes.add(selNode);
+		if (! activeEdgeLock) {
+			for (Edge e : activeEdges)
+				e.deselect();
+			
+			activeEdges.clear();
+			selEdge = findEdgeAtPoint(prevX, prevY);
+			
+			// Yield to selected nodes, since it's more likely the user is trying to click a Node
+			if (null != selEdge && selNode == null) {
+				// If we're in a moving sort of mood...
+				if (parent.getMode() == GenSeq.MOVE_NODES || parent.mouseButton == PApplet.CENTER)
+					selEdge.select();
+				
+				activeEdges.add(selEdge);
+			}
+		} else {
+			// Lift edge lock
+			activeEdgeLock = false;
+		}
+
+
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent me) {
 
-		if (distance(me.getX(), me.getY(), prevX, prevY) >= CLICK_ACCURACY) {
+		// See if we were connecting two nodes with an edge, and create that edge.
+		if (distance(me.getX(), me.getY(), prevX, prevY) >= CLICK_ACCURACY_NODE) {
 			Node n1 = findNodeAtPoint(prevX, prevY);
 			Node n2 = findNodeAtPoint(me.getX(), me.getY());
 			
@@ -309,15 +472,17 @@ public class Score implements ActionListener, MouseListener {
 	public void mouseDragged(int mX, int mY) {
 		
 		// If we can move nodes...
-		if (parent.getMode() == GenSeq.MOVE_NODES ||
-				(parent.getMode() == GenSeq.CREATE_NODES && parent.mouseButton == parent.CENTER)) {
+		if (parent.getMode() == GenSeq.MOVE_NODES || parent.mouseButton == parent.CENTER) {
 			// If there are already nodes selected...
 			if (null != activeNodes && activeNodes.size() > 0 && (! activeNodeLock)) {
 				
+				int deltaX = mX - prevX;
+				int deltaY = mY - prevY;
+				
 				for (Node n : activeNodes) {
-					n.setX(n.getX() + (mX - prevX));
-					n.setY(n.getY() + (mY - prevY));
-					
+					n.setX(n.getX() + deltaX);
+					n.setY(n.getY() + deltaY);
+
 					// Resize the edges
 					for (Edge e : n.getEdges())
 						e.calculateLength();
@@ -340,22 +505,54 @@ public class Score implements ActionListener, MouseListener {
 				
 				sr.setBounds(prevX, prevY, mX, mY);
 				
-				// Show selected nodes
-				int startX = sr.getX();
-				int stopX = sr.getX2();
-				
 				// Find nodes within selected area
+				// TODO: This involves two O(n) operations, every time the mouse is moved.
+				// Can this be faster?
 				for (Node n : nodes) {
-					if (n.getX() < startX) continue;
-					if (n.getX() <= stopX && n.getY() >= sr.getY() && n.getY() <= sr.getY2())
-						activeNodes.add(n);
-					else if (n.getX() > stopX)
-						break;
+					if (n.getX() >= sr.getX() &&
+							n.getX() <= sr.getX2() &&
+							n.getY() >= sr.getY() &&
+							n.getY() <= sr.getY2()) {
+						
+						if (! activeNodes.contains(n)) {
+							activeNodes.add(n);
+							n.select();
+						}
+
+					}
+					else {
+						n.deselect();
+						activeNodes.remove(n);
+					}
+						
 				}
 				
-				// Highlight selected nodes
-				for (Node n : activeNodes)
-					n.select();
+				// Find edges within selected area
+				// TODO: This involves two O(n) operations, every time the mouse is moved.
+				// Can this be faster?
+				for (Edge e : edges) {
+					int lowx = (e.getSource().getX() < e.getDestination().getX()? e.getSource().getX() : e.getDestination().getX());
+					int highx = (e.getSource().getX() > e.getDestination().getX()? e.getSource().getX() : e.getDestination().getX());
+					int lowy = (e.getSource().getY() < e.getDestination().getY()? e.getSource().getY() : e.getDestination().getY());
+					int highy = (e.getSource().getY() > e.getDestination().getY()? e.getSource().getY() : e.getDestination().getY());
+					
+					if (lowx >= sr.getX() &&
+							highx <= sr.getX2() &&
+							lowy >= sr.getY() &&
+							highy <= sr.getY2()) {
+						
+						if (! activeEdges.contains(e)) {
+							activeEdges.add(e);
+							e.select();
+						}
+
+					}
+					else {
+						e.deselect();
+						activeEdges.remove(e);
+					}
+						
+				}
 				
 			}
 		}

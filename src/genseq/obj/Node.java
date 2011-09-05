@@ -121,6 +121,31 @@ public class Node extends DrawableObject implements MIDIConstants {
 		img.updatePixels();
 		selected = false;
 	}
+	
+	/**
+	 * COPY CONSTRUCTOR
+	 * Provides a way to create a deep copy of a Node object, with
+	 * all attributes/events still intact.
+	 * 
+	 * @param n - original node that is to be copied
+	 */
+	public Node(Node n) {
+		super(n.parent);
+		
+		colorize();
+		prime = n.prime;
+		legato = n.legato;
+		eventList = new ArrayList<NodeEvent>();
+		eventList.addAll(n.eventList);
+		selected = false;
+
+		// N.B.: "midisend" and "img" fields are already present, as they are static
+		// Also, Edges have to be created from scratch again!
+	}
+	
+	public Node copy() {
+		return new Node(this);
+	}
 
 	/**
 	 * setReceiver() - Change all nodes' MIDI receiver.
@@ -389,19 +414,46 @@ public class Node extends DrawableObject implements MIDIConstants {
 		selected = false;
 	}
 	
+	public boolean isSelected() {
+		return selected;
+	}
+	
 	/**
 	 * equals()
 	 * 
 	 * Returns true if this node is equal with respect to graphical position
 	 * to another node.
 	 * 
-	 * TODO: Make sure that the attributes are equal for each node as well.
-	 * 
 	 * @param n - Node of comparison.
 	 * @return - True if the nodes are equal w.r.t. location, false otherwise.
 	 */
 	public boolean equals(Node n) {
-		return (getX() == n.getX() && getY() == n.getY());
+		return (getX() == n.getX() && getY() == n.getY() && n.resembles(this));
+	}
+	
+	/**
+	 * resembles()
+	 * 
+	 * @param n - Node to compare
+	 * 
+	 * @return True if this node "resembles" Node n. This should imply
+	 * that this node was duplicated from n, or vice-versa. Returns
+	 * false otherwise.
+	 * 
+	 */
+	public boolean resembles(Node n) {
+		boolean ret = true;
+		
+		if (n.isLegato() != this.isLegato()) ret = false;
+		if (n.isPrimeNode() != this.isPrimeNode()) ret = false;
+		
+		// Now compare event lists
+		if (n.getEventList().size() != this.getEventList().size()) ret = false;
+		for (int i=0; i<n.getEventList().size(); i++) {
+			if (! n.getEventList().get(i).equals(this.getEventList().get(i))) ret = false;
+		}
+		
+		return ret;
 	}
 
 	public int compareTo(Node n) {

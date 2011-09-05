@@ -45,7 +45,10 @@ public class NodeEvent implements MIDIConstants {
 		notelist.add(n);
 		this.likelihood = likelihood;
 		
-		type = TYPE_SINGLE_NOTE;
+		if (REST == n.getPitch())
+			type = TYPE_REST;
+		else
+			type = TYPE_SINGLE_NOTE;
 	}
 
 	
@@ -60,6 +63,11 @@ public class NodeEvent implements MIDIConstants {
 		this(new Note(), DEFAULT_LIKELIHOOD);
 	}
 	
+	/**
+	 * getNotes()
+	 * 
+	 * @return A list of all the notes that this NodeEvent contains.
+	 */
 	public ArrayList<Note> getNotes() {
 		return notelist;
 	}
@@ -119,6 +127,20 @@ public class NodeEvent implements MIDIConstants {
 			result.append(")");
 		
 		return result.toString();
+	}
+	
+	public boolean equals(NodeEvent ne) {
+		boolean ret = true;
+		
+		if (ne.getType() != this.getType()) ret = false;
+		if (ne.getLikelihood() != this.getLikelihood()) ret = false;
+		if (ne.getNotes().size() != this.getNotes().size()) ret = false;
+		
+		for (int i = 0; i<ne.getNotes().size(); i++) {
+			if (! ne.getNotes().get(i).equals(this.getNotes().get(i))) ret = false;
+		}
+		
+		return ret;
 	}
 	
 }

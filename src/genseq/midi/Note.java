@@ -49,4 +49,17 @@ public class Note {
 		this.velocity = velocity;
 	}
 	
+	/**
+	 * equals()
+	 * 
+	 * @param n - Note to compare
+	 * 
+	 * @return True if and only if the Note n is identical to this note
+	 * with respect to pitch and velocity. False otherwise.
+	 * 
+	 */
+	public boolean equals(Note n) {
+		return (n.getPitch() == this.getPitch() && n.getVelocity() == this.getVelocity());
+	}
+	
 }

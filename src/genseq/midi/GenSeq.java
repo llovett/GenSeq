@@ -20,6 +20,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.ArrayList;
@@ -42,7 +44,10 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 	private static final int DEFAULT_HEIGHT = 600;
 		
 	/*** GUI COMPONENTS ***/
-	private static PopupMenu contextMenu;
+	private static PopupMenu nodePopupMenu;
+	private static PopupMenu edgePopupMenu;
+	private static PopupMenu generalPopupMenu;
+	private static PopupMenu circuitPopupMenu;
 	
 	/*** INTERNAL CONTROL ***/
 	// How accurate does the user have to be with the mouse in order
@@ -87,7 +92,6 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 	 */
 	public GenSeq(GenSeqWindow parent) {
 		GenSeq.parent = parent;
-		
 		constructComponents();
 	}
 
@@ -106,19 +110,45 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		activeScore = 0;
 		
 		// Set up GUI components (non-Processing)
-		contextMenu = new PopupMenu("Edit");
+		nodePopupMenu = new PopupMenu("Node");
+		edgePopupMenu = new PopupMenu("Edge");
+		generalPopupMenu = new PopupMenu("Edit");
+		circuitPopupMenu = new PopupMenu("Circuit");
 		
-		MenuItem pmDelete = new MenuItem("Delete node");
-		pmDelete.addActionListener(new pmDeleteActionListener());
-		MenuItem pmAttr	= new MenuItem("Node attributes...");
-		pmAttr.addActionListener(new pmAttributesActionListener());
+		// Node popup menu
+		MenuItem pmDeleteNode = new MenuItem("Delete node");
+		pmDeleteNode.addActionListener(new pmDeleteNodeActionListener());
+		MenuItem pmNodeAttr	= new MenuItem("Node attributes...");
+		pmNodeAttr.addActionListener(new pmAttributesActionListener());
 		MenuItem pmColor = new MenuItem("Set color");
+		MenuItem pmDuplicate = new MenuItem("Duplicate");
+		pmDuplicate.addActionListener(new pmDuplicateActionListener());
 		
-		contextMenu.add(pmDelete);
-		contextMenu.add(pmAttr);
-		contextMenu.add(pmColor);
+		nodePopupMenu.add(pmDeleteNode);
+		nodePopupMenu.add(pmNodeAttr);
+		nodePopupMenu.add(pmColor);
+		nodePopupMenu.add(pmDuplicate);
 		
-		add(contextMenu);
+		// Edge popup menu
+		MenuItem pmDeleteEdge = new MenuItem("Delete edge");
+		pmDeleteEdge.addActionListener(new pmDeleteEdgeActionListener());
+		MenuItem pmEdgeAttr = new MenuItem("Edge attributes...");
+		
+		edgePopupMenu.add(pmDeleteEdge);
+		edgePopupMenu.add(pmEdgeAttr);
+		edgePopupMenu.add(pmDuplicate);
+		
+		// Circuit popup menu
+		MenuItem pmDeleteSelection = new MenuItem("Delete selection");
+		pmDeleteSelection.addActionListener(new pmDeleteSelectionActionListener());
+		
+		circuitPopupMenu.add(pmDeleteSelection);
+		circuitPopupMenu.add(pmDuplicate);
+		
+		add(nodePopupMenu);
+		add(edgePopupMenu);
+		add(circuitPopupMenu);
+		
 		enableEvents(AWTEvent.MOUSE_EVENT_MASK);
 	}
 	
@@ -186,8 +216,20 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		
 		// Mouse triggers can happen at the time of the mouse being
 		// pressed or released on different platforms. We check it in both.
-		if (me.isPopupTrigger())
-			contextMenu.show(this, me.getX(), me.getY());
+		if (me.isPopupTrigger()) {
+			// If we are on a node and there are multiple nodes selected, show circuit popup menu
+			if (scores.get(activeScore).getSelectedNodes().size() > 1)
+				circuitPopupMenu.show(this, me.getX(), me.getY());
+			// Otherwise, if we are on a node (and 1 or 0 nodes selected)
+			else if (null != scores.get(activeScore).findNodeAtPoint(me.getX(), me.getY()))
+				nodePopupMenu.show(this, me.getX(), me.getY());
+			// Otherwise, if we are on an edge
+			else if (null != scores.get(activeScore).findEdgeAtPoint(me.getX(), me.getY()))
+				edgePopupMenu.show(this, me.getX(), me.getY());
+			// Otherwise, show the general popup
+//			else
+//				generalPopupMenu.show(this, me.getX(), me.getY());
+		}
 		
 		prevX = me.getX();
 		prevY = me.getY();
@@ -205,7 +247,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		// Mouse triggers can happen at the time of the mouse being
 		// pressed or released on different platforms. We check it in both.
 		if (me.isPopupTrigger())
-			contextMenu.show(this, me.getX(), me.getY());
+			nodePopupMenu.show(this, me.getX(), me.getY());
 		
 		scores.get(activeScore).mouseReleased(me);
 		
@@ -320,19 +362,169 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 -y2, 2));
 	}
 	
+	/**
+	 * duplicateSelection()
+	 * 
+	 * Duplicates (deep-copies) all the Nodes and Edges currently selected.
+	 * The copies will possess all the same attributes and event lists as
+	 * their originals. Copies will be placed in the same relative position,
+	 * at the top-left corner of the score.
+	 * 
+	 */
+	private void duplicateSelection() {
 	
+		/**
+		 * 1. For each selected edge:
+		 * 		a. Check to see if the source/dest already on the "copies" list using
+		 * 			"resembles"
+		 * 			i. If not, copy those nodes.
+		 * 		b. Create a new edge from source --> dest
+		 * 
+		 * 2. For each selected node:
+		 * 		a. Check to see if it is already on the copies list using "resembles"
+		 * 			i. If not, copy that node
+		 * 
+		 */
+		
+		
+		ArrayList<Node> selectedNodes = scores.get(activeScore).getSelectedNodes();
+		ArrayList<Edge> selectedEdges = scores.get(activeScore).getSelectedEdges();
+		// Brief sanity check
+		if (selectedNodes.size() < 1)
+			return;
+		
+		// Find the leftmost node's x-coordinate
+		// Nodes are sorted by ascending X-coordinate automatically
+		int minX = selectedNodes.get(0).getX();	
+		// Find topmost node's y-coordinate
+		int minY = 100000000;
+		for (Node n : selectedNodes) {
+			if (n.getY() < minY)
+				minY = n.getY();
+		}
+		
+		// X and Y offsets of the nodes to be copied
+		int offX = -minX;
+		int offY = -minY;
+		
+		// Lists to store copied nodes and edges
+		ArrayList<Node> copiedNodes = new ArrayList<Node>();
+		ArrayList<Edge> copiedEdges = new ArrayList<Edge>();
+		
+		// For each selected edge ...
+		for (Edge ed : selectedEdges) {
+			Node s = ed.getSource();
+			Node d = ed.getDestination();
+			
+			// These will become the source and destination nodes of the newly copied edge.
+			Node newSource, newDest;
+			
+			// Check to see if the source and destination of the edge have already been copied.
+			int copiedSource, copiedDest;
+			copiedSource = copiedDest = -1;
+			for (int i = 0; i<copiedNodes.size(); i++) {
+				Node n = copiedNodes.get(i);
+				if (n.resembles(s)) copiedSource = i;
+				if (n.resembles(d)) copiedDest = i;
+			}
+			
+			// Copy over the source and destination nodes of the edge, if necessary.
+			if (copiedSource < 0) {
+				newSource = s.copy();
+				newSource.setX(s.getX() + offX);
+				newSource.setY(s.getY() + offY);
+				copiedNodes.add(newSource);
+			} else
+				newSource = copiedNodes.get(copiedSource);
+			if (copiedDest < 0) {
+				newDest = d.copy();
+				newDest.setX(d.getX() + offX);
+				newDest.setY(d.getY() + offY);
+				copiedNodes.add(newDest);
+			} else
+				newDest = copiedNodes.get(copiedDest);
+			
+			Edge ned = new Edge(this, newSource, newDest);
+			newSource.registerEdge(ned);
+			newDest.registerEdge(ned);
+			copiedEdges.add(ned);
+		}
+		
+		// For each selected Node ...
+		for (Node n : selectedNodes) {
+			// Check to see if we already copied the Node.
+			boolean exists = false;
+			for (Node c : copiedNodes)
+				if (c.resembles(n))
+					exists = true;
+			
+			// Copy the node if necessary
+			if (! exists) {
+				Node newNode = n.copy();
+				newNode.setX(n.getX() + offX);
+				newNode.setY(n.getY() + offY);
+				copiedNodes.add(newNode);
+			}
+		}
+		
+		// Update the active Score's Node and Edge lists
+		scores.get(activeScore).getNodes().addAll(copiedNodes);
+		scores.get(activeScore).getEdges().addAll(copiedEdges);
+		
+		// Clear the current selection of Nodes and Edges
+		for (Node n : selectedNodes)
+			n.deselect();
+		for (Edge ed : selectedEdges)
+			ed.deselect();
+		
+		// Select the newly copied Nodes and Edges
+		for (Node n : copiedNodes)
+			n.select();
+		for (Edge ed : copiedEdges)
+			ed.select();
+		
+	}
 	
 	
 	/*******************
 	 * INTERNAL CLASSES
 	 ******************/
 	
-	private class pmDeleteActionListener implements ActionListener {
+	private class pmDeleteNodeActionListener implements ActionListener {
 		
 		public void actionPerformed(ActionEvent e) {
 			
 			scores.get(activeScore).removeNode(prevX, prevY);
 			
+		}
+		
+	}
+	
+	private class pmDuplicateActionListener implements ActionListener {
+
+		public void actionPerformed(ActionEvent e) {
+			duplicateSelection();
+		}
+		
+	}
+	
+	private class pmDeleteEdgeActionListener implements ActionListener {
+		
+		public void actionPerformed(ActionEvent e) {
+			scores.get(activeScore).removeEdge(prevX, prevY);
+		}
+		
+	}
+	
+	private class pmDeleteSelectionActionListener implements ActionListener {
+		
+		public void actionPerformed(ActionEvent e) {
+			Score s = scores.get(activeScore);
+			
+			for (Node n : s.getSelectedNodes())
+				s.removeNode(n);
+			for (Edge ed : s.getSelectedEdges())
+				s.removeEdge(ed);
 		}
 		
 	}
