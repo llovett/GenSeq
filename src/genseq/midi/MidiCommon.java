@@ -31,8 +31,6 @@ public final class MidiCommon implements MIDIConstants {
 	}
 
 	private static void init() {
-		System.out.println("MIDICOMMON : INIT");
-		
 		pitches = new Hashtable<String, Integer>();
 
 		int counter = 0;

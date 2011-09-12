@@ -49,7 +49,7 @@ public class Node extends DrawableObject implements MIDIConstants {
 	private ArrayList<Edge> inboundEdges;	// "inboundEdges" contains only edges into this node.
 	private ArrayList<Edge> outboundEdges;	// "outboundEdges" contains only edges out of this node.
 
-	private int circuitID;	// Circuit identification number
+	private int canvasID;	// Circuit identification number
 	private boolean prime;	// Whether or not the sequencer should begin playing with this node
 	private boolean legato; // True if other previous event's notes should be stopped first before this node responds.
 	private ArrayList<NodeEvent> eventList;	// List of pitches that may be played
@@ -68,8 +68,9 @@ public class Node extends DrawableObject implements MIDIConstants {
 	 * @param x - x-coordinate of this node, graphically
 	 * @param y - y-coordinate of this node, graphically
 	 */
-	public Node(GenSeq parent, int circuitID, int x, int y) {
+	public Node(GenSeq parent, int canvasID, int x, int y) {
 		super(parent);
+		this.canvasID = canvasID;
 
 		setX(x);
 		setY(y);
@@ -131,6 +132,10 @@ public class Node extends DrawableObject implements MIDIConstants {
 	 */
 	public Node(Node n) {
 		super(n.parent);
+		
+		edges = new ArrayList<Edge>();
+		inboundEdges = new ArrayList<Edge>();
+		outboundEdges = new ArrayList<Edge>();
 		
 		colorize();
 		prime = n.prime;
@@ -290,6 +295,20 @@ public class Node extends DrawableObject implements MIDIConstants {
 
 		edges.add(e);
 	}
+	
+	/**
+	 * unregisterEdge(Edge e) - Remove all references to Edge e stored in this node.
+	 * 
+	 * @param e - The edge to remove
+	 * @return - True if the edge lists stored in the Node were changed, false otherwise.
+	 */
+	public boolean unregisterEdge(Edge e) {
+		//if (! inboundEdges.remove(e))
+		inboundEdges.remove(e);
+			outboundEdges.remove(e);
+			
+		return edges.remove(e);
+	}
 
 	/**
 	 * getEdges() - get all edges into or out of this node.
@@ -379,6 +398,15 @@ public class Node extends DrawableObject implements MIDIConstants {
 		this.eventList = notes;
 	}
 
+	/**
+	 * getCanvasID()
+	 * 
+	 * @return The canvas ID that identifies the score to which this Node belongs.
+	 */
+	public int getCanvasID() {
+		return canvasID;
+	}
+	
 	//	/**
 	//	 * getAttributes()
 	//	 * 
@@ -428,7 +456,7 @@ public class Node extends DrawableObject implements MIDIConstants {
 	 * @return - True if the nodes are equal w.r.t. location, false otherwise.
 	 */
 	public boolean equals(Node n) {
-		return (getX() == n.getX() && getY() == n.getY() && n.resembles(this));
+		return (getX() == n.getX() && getY() == n.getY() && n.resembles(this) && getCanvasID() == n.getCanvasID());
 	}
 	
 	/**

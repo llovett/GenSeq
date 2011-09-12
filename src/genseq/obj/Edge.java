@@ -1,7 +1,6 @@
 package genseq.obj;
 
 import processing.core.*;
-import java.util.Comparator;
 
 public class Edge extends DrawableObject {
 	private static final int DEFAULT_STROKE_RED = 0;
@@ -10,9 +9,10 @@ public class Edge extends DrawableObject {
 	private static final int DEFAULT_STROKE_WEIGHT = 2;
 	private static final int SELECTED_STROKE_WEIGHT = 5;
 	
-	private Node from, to;
-	private int length;
-	private boolean selected;
+	private double lhood;		// Likelihood of this Edge being chosen by its source Node
+	private Node from, to;		// Source and Destination Nodes, respectively
+	private int length;			// This Edge's visual length, in pixels
+	private boolean selected;	// Whether or not this Node is selected
 	
 	public Edge(PApplet parent, Node from, Node to) {
 		super(parent);
@@ -25,18 +25,6 @@ public class Edge extends DrawableObject {
 		
 		calculateLength();
 	}
-	
-//	/**
-//	 * COPY CONSTRUCTOR
-//	 * Provides a way to do a deep-copy.
-//	 * 
-//	 * @param e - Edge that is to be copied.
-//	 */
-//	public Edge(Edge e) {
-//		super(e.parent);
-//		
-//		
-//	}
 	
 	public void calculateLength() {
 		length = (int)Math.sqrt(Math.pow(from.getX() - to.getX(), 2) + Math.pow(from.getY() - to.getY(), 2)) - from.getWidth()/2 - 2;
@@ -124,6 +112,7 @@ public class Edge extends DrawableObject {
 				from.getY() == e.getSource().getY());
 	}
 	
+	// TODO: Implement this method if necessary.
 	public boolean resembles(Edge e) {
 		//return getSource()
 		return true;

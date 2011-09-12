@@ -16,14 +16,12 @@ package genseq.midi;
 
 import genseq.obj.*;
 import processing.core.*;
-import java.awt.PopupMenu;
-import java.awt.AWTEvent;
-import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -141,11 +139,12 @@ public class Score implements ActionListener, MouseListener {
 	public boolean removeNode(Node n) {
 		if (null == n) return false;
 		
-		for (Edge e : n.getEdges())
-			edges.remove(e);
+		for (int i=n.getEdges().size()-1; i>=0; i--) {
+			removeEdge(n.getEdges().get(i));
+		}
 		
 		Collections.sort(edges, ecomp);
-		
+				
 		return nodes.remove(n);
 	}
 	
@@ -159,7 +158,8 @@ public class Score implements ActionListener, MouseListener {
 	 */
 	public Edge removeEdge(int x, int y) {
 		Edge e = findEdgeAtPoint(x,y);
-		edges.remove(e);
+		
+		removeEdge(e);
 		
 		return e;
 	}
@@ -171,6 +171,11 @@ public class Score implements ActionListener, MouseListener {
 	 * @return True if the edges list was changed, false otherwise.
 	 */
 	public boolean removeEdge(Edge e) {
+		Node s = e.getSource();
+		Node d = e.getDestination();
+		s.unregisterEdge(e);
+		d.unregisterEdge(e);
+		
 		return edges.remove(e);
 	}
 	
@@ -298,6 +303,70 @@ public class Score implements ActionListener, MouseListener {
 		return activeEdges;
 	}
 	
+	/**
+	 * clearActiveNodes()
+	 * 
+	 * Clears all the currently selected Nodes.
+	 */
+	public void clearActiveNodes() {
+		for (Node n : activeNodes)
+			n.deselect();
+		
+		activeNodes.clear();
+	}
+	
+	/**
+	 * clearActiveEdges()
+	 * 
+	 * Clears all the currently selected Edges.
+	 */
+	public void clearActiveEdges() {
+		for (Edge e : activeEdges)
+			e.deselect();
+		
+		activeEdges.clear();
+	}
+	
+	/**
+	 * selectNodes(Node n) - Select Nodes on this Score.
+	 * @param n - Node to be selected.
+	 */
+	public void selectNodes(Node n) {
+		n.select();
+		activeNodes.add(n);
+	}
+	
+	/**
+	 * selectEdges(Edge e) - Select Edges on this Score.
+	 * @param e - Edge to be selected.
+	 */
+	public void selectEdges(Edge e) {
+		e.select();
+		activeEdges.add(e);
+	}
+	
+	/**
+	 * selectNodes(Node n) - Select Nodes on this Score.
+	 * @param n - Node to be selected.
+	 */
+	public void selectNodes(Collection<Node> nodes) {
+		for (Node n : nodes)
+			n.select();
+		
+		activeNodes.addAll(nodes);
+	}
+	
+	/**
+	 * selectEdges(Edge e) - Select Edges on this Score.
+	 * @param e - Edge to be selected.
+	 */
+	public void selectEdges(Collection<Edge> edges) {
+		for (Edge e : edges)
+			e.select();
+		
+		activeEdges.addAll(edges);
+	}
+	
 	/*******************************************************
 	 * DRAW LOOP.
 	 * 
@@ -340,8 +409,6 @@ public class Score implements ActionListener, MouseListener {
 		
 	}	
 	
-
-	@SuppressWarnings("unchecked")
 	@Override
 	public void mouseClicked(MouseEvent me) {
 
@@ -349,9 +416,14 @@ public class Score implements ActionListener, MouseListener {
 
 			if (me.getButton() == MouseEvent.BUTTON1) {
 
+				// Clear all selected Nodes
+				clearActiveNodes();
 
 				if (distance(me.getX(), me.getY(), prevX, prevY) < CLICK_ACCURACY_NODE) {
-					nodes.add(new Node(parent, nodes.size(), me.getX(), me.getY()));
+					Node newNode = new Node(parent, nodes.size(), me.getX(), me.getY());
+					newNode.select();
+					nodes.add(newNode);
+					activeNodes.add(newNode);
 
 					// Keep our lists of nodes sorted, so we can
 					// search / delete & do other things quickly.
@@ -385,22 +457,23 @@ public class Score implements ActionListener, MouseListener {
 		prevX = me.getX();
 		prevY = me.getY();
 
-		Node selNode = null;	// A node that may potentially be selected
-		Edge selEdge = null;	// An edge that may potentially be selected
+		// A node that may potentially be selected
+		Node selNode = findNodeAtPoint(prevX, prevY);
+		// An edge that may potentially be selected
+		Edge selEdge = findEdgeAtPoint(prevX, prevY);	
 		
 		// Clear any visual FX on the active nodes that may be happening
 		if (! activeNodeLock) {
-			for (Node n : activeNodes)
-				n.deselect();
-
-			activeNodes.clear();
-			selNode = findNodeAtPoint(prevX, prevY);
+			if (null == selNode || (! selNode.isSelected()))
+				clearActiveNodes();
+			
 			if (null != selNode) {
 				// If we're in a moving sort of mood...
 				if (parent.getMode() == GenSeq.MOVE_NODES || parent.mouseButton == PApplet.CENTER)
-					selNode.select();
-				
-				activeNodes.add(selNode);
+					if (! selNode.isSelected()) {
+						selNode.select();
+						activeNodes.add(selNode);
+					}
 			}
 			
 		} else {
@@ -408,11 +481,20 @@ public class Score implements ActionListener, MouseListener {
 			activeNodeLock = false;
 		}
 		if (! activeEdgeLock) {
-			for (Edge e : activeEdges)
-				e.deselect();
+			// See if we should clear all selected Edges or not : 
+			// we should release the edge if selEdge is null AND
+			// (node we clicked is null or is not connected to a selected edge)
+			boolean nodeIsIncidentToSelectedEdge = false;
+			if (null != selNode) {
+				for (Edge e : selNode.getEdges())
+					if (e.isSelected()) {
+						nodeIsIncidentToSelectedEdge = true;
+						break;
+					}
+			}
 			
-			activeEdges.clear();
-			selEdge = findEdgeAtPoint(prevX, prevY);
+			if ((null == selNode || (! nodeIsIncidentToSelectedEdge)) || (null != selEdge && (! selEdge.isSelected())))
+				clearActiveEdges();
 			
 			// Yield to selected nodes, since it's more likely the user is trying to click a Node
 			if (null != selEdge && selNode == null) {
@@ -426,7 +508,6 @@ public class Score implements ActionListener, MouseListener {
 			// Lift edge lock
 			activeEdgeLock = false;
 		}
-
 
 	}
 
@@ -472,7 +553,7 @@ public class Score implements ActionListener, MouseListener {
 	public void mouseDragged(int mX, int mY) {
 		
 		// If we can move nodes...
-		if (parent.getMode() == GenSeq.MOVE_NODES || parent.mouseButton == parent.CENTER) {
+		if (parent.getMode() == GenSeq.MOVE_NODES || parent.mouseButton == PApplet.CENTER) {
 			// If there are already nodes selected...
 			if (null != activeNodes && activeNodes.size() > 0 && (! activeNodeLock)) {
 				
@@ -494,6 +575,7 @@ public class Score implements ActionListener, MouseListener {
 				
 			}
 			// Otherwise, if there are no nodes selected...
+			// The code hereunder should be performed only for clicking & dragging the mouse to select Nodes.
 			else {
 				// Lock the activeNodes list, since we'll be adding an indefinite number of nodes to this list.
 				activeNodeLock = true;
@@ -579,22 +661,23 @@ public class Score implements ActionListener, MouseListener {
 	 * INTERNAL CLASSES
 	 ******************/
 	
-	private class EdgeComparator implements Comparator {
+	private class EdgeComparator implements Comparator<Edge> {
 		
-		public int compare(Object o1, Object o2) {
-			return ((Edge)o1).compareTo((Edge)o2);
+		public int compare(Edge o1, Edge o2) {
+			return (o1.compareTo(o2));
 		}
 		
 	}
 	
-	private class NodeComparator implements Comparator {
+	private class NodeComparator implements Comparator<Node> {
 		
-		public int compare(Object o1, Object o2) {
-			return ((Node)o1).compareTo((Node)o2);
+		public int compare(Node o1, Node o2) {
+			return (o1.compareTo(o2));
 		}
 		
 	}
 	
+	@SuppressWarnings("unused")
 	private class SelectRect extends DrawableObject {
 		
 		private int x2, y2;
@@ -612,7 +695,7 @@ public class Score implements ActionListener, MouseListener {
 			else
 				this.x2 = x2;
 		}
-		
+
 		public void setY2(int y2) {
 			if (y2 < y) {
 				int buff = y;
@@ -648,7 +731,7 @@ public class Score implements ActionListener, MouseListener {
 		
 		public void render() {
 			setupDrawPrefs();
-			parent.rectMode(parent.CORNERS);
+			parent.rectMode(PApplet.CORNERS);
 			parent.rect(x, y, x2, y2);
 		}
 		

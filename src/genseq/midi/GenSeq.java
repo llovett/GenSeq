@@ -305,7 +305,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		long sdtime = (long)((60.0 / TEMPO) / (SMALL_SUBDIVISION / 4.0) * 1000);
 		
 		// Dubugging message
-		System.out.println("Duration of "+SMALL_SUBDIVISION+" note: "+sdtime);
+		//System.out.println("Duration of "+SMALL_SUBDIVISION+" note: "+sdtime);
 		
 		traversers = new ArrayList<ScoreTraverser>();
 		ArrayList<Node> primeNodes = new ArrayList<Node>();
@@ -379,6 +379,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		 * 			"resembles"
 		 * 			i. If not, copy those nodes.
 		 * 		b. Create a new edge from source --> dest
+		 * 		c. Put edge on copiedEdges
 		 * 
 		 * 2. For each selected node:
 		 * 		a. Check to see if it is already on the copies list using "resembles"
@@ -386,9 +387,10 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		 * 
 		 */
 		
+		Score score = scores.get(activeScore);
 		
-		ArrayList<Node> selectedNodes = scores.get(activeScore).getSelectedNodes();
-		ArrayList<Edge> selectedEdges = scores.get(activeScore).getSelectedEdges();
+		ArrayList<Node> selectedNodes = score.getSelectedNodes();
+		ArrayList<Edge> selectedEdges = score.getSelectedEdges();
 		// Brief sanity check
 		if (selectedNodes.size() < 1)
 			return;
@@ -436,6 +438,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 				copiedNodes.add(newSource);
 			} else
 				newSource = copiedNodes.get(copiedSource);
+			
 			if (copiedDest < 0) {
 				newDest = d.copy();
 				newDest.setX(d.getX() + offX);
@@ -468,20 +471,18 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		}
 		
 		// Update the active Score's Node and Edge lists
-		scores.get(activeScore).getNodes().addAll(copiedNodes);
-		scores.get(activeScore).getEdges().addAll(copiedEdges);
+		score.getNodes().addAll(copiedNodes);
+		score.getEdges().addAll(copiedEdges);
 		
 		// Clear the current selection of Nodes and Edges
-		for (Node n : selectedNodes)
-			n.deselect();
-		for (Edge ed : selectedEdges)
-			ed.deselect();
+		score.clearActiveEdges();
+		score.clearActiveNodes();
 		
 		// Select the newly copied Nodes and Edges
-		for (Node n : copiedNodes)
-			n.select();
-		for (Edge ed : copiedEdges)
-			ed.select();
+		score.selectNodes(copiedNodes);
+		score.selectEdges(copiedEdges);
+		
+		System.out.printf("Copied %d nodes and %d edges.\n", copiedNodes.size(), copiedEdges.size());
 		
 	}
 	
