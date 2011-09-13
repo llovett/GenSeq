@@ -420,7 +420,7 @@ public class Score implements ActionListener, MouseListener {
 				clearActiveNodes();
 
 				if (distance(me.getX(), me.getY(), prevX, prevY) < CLICK_ACCURACY_NODE) {
-					Node newNode = new Node(parent, nodes.size(), me.getX(), me.getY());
+					Node newNode = new Node(parent, me.getX(), me.getY());
 					newNode.select();
 					nodes.add(newNode);
 					activeNodes.add(newNode);

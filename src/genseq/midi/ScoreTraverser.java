@@ -140,7 +140,7 @@ public class ScoreTraverser extends Thread {
 			
 		}
 	}
-	n
+	
 	/**
 	 * tick()
 	 * 

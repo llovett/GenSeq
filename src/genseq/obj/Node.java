@@ -49,14 +49,13 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 	private ArrayList<Edge> inboundEdges;	// "inboundEdges" contains only edges into this node.
 	private ArrayList<Edge> outboundEdges;	// "outboundEdges" contains only edges out of this node.
 
-	private int canvasID;	// Circuit identification number
 	private boolean prime;	// Whether or not the sequencer should begin playing with this node
 	private boolean legato; // True if other previous event's notes should be stopped first before this node responds.
 	private ArrayList<NodeEvent> eventList;	// List of pitches that may be played
 	private boolean selected;
 	
-	private int metaID;		// Numerical ID of the MetaNode that contains this Node. If this Node is not
-							// contained within a MetaNode, this value is -1.
+	private MetaNode metaNode;		// Numerical ID of the MetaNode that contains this Node. If this Node is not
+									// contained within a MetaNode, this value is -1.
 
 	/*** MIDI CONTROL ***/
 	private static Receiver midisend;
@@ -71,10 +70,9 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 	 * @param x - x-coordinate of this node, graphically
 	 * @param y - y-coordinate of this node, graphically
 	 */
-	public Node(GenSeq parent, int canvasID, int x, int y) {
+	public Node(GenSeq parent, int x, int y) {
 		super(parent);
-		this.canvasID = canvasID;
-		metaID = -1;
+		metaNode = null;
 
 		setX(x);
 		setY(y);
@@ -285,6 +283,11 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 		msg.setMessage(ShortMessage.NOTE_OFF, 1, 60, 100);
 
 		colorize();
+		
+		// Call stop() method in containing MetaNode, if there is one
+		if (null != metaNode)
+			metaNode.stop(t);
+			
 	}
 
 	/**
@@ -404,32 +407,21 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 	}
 
 	/**
-	 * getCanvasID()
-	 * 
-	 * @return The canvas ID that identifies the score to which this Node belongs.
-	 */
-	public int getCanvasID() {
-		return canvasID;
-	}
-	
-	/**
 	 * getMetaID()
 	 * 
-	 * @return - The numerical ID of the MetaNode that contains this Node.
-	 * If this Node is not contained within a MetaNode, this value is -1.
-	 * 
+	 * @return The metaID that identifies the MetaNode to which this Node belongs.
 	 */
-	protected int getMetaID() {
-		return metaID;
+	protected MetaNode getMetaNode() {
+		return metaNode;
 	}
-	
+
 	/**
-	 * setMetaID
+	 * setMetaID(int metaID)
 	 * 
-	 * @param metaID - Set this Node's metaID.
+	 * @param metaID - The ID of the MetaNode that contains this Node.
 	 */
-	protected void setMetaID(int metaID) {
-		this.metaID = metaID;
+	protected void setMetaNode(MetaNode metaNode) {
+		this.metaNode = metaNode;
 	}
 	
 	//	/**
@@ -481,7 +473,11 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 	 * @return - True if the nodes are equal w.r.t. location, false otherwise.
 	 */
 	public boolean equals(Node n) {
-		return (getX() == n.getX() && getY() == n.getY() && n.resembles(this) && getCanvasID() == n.getCanvasID());
+		return (getX() == n.getX() &&
+				getY() == n.getY() &&
+				n.resembles(this) &&
+				((null == getMetaNode() && null == n.getMetaNode()) ||
+						getMetaNode().equals(n.getMetaNode())));
 	}
 	
 	/**

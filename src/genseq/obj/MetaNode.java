@@ -9,29 +9,33 @@
  * back outside the MN along one if its own outbound edges.
  * 
  * Who is in charge of managing the Nodes/Edges inside of the MN?
- * 
+ * How do we render MetaNodes? IDEAS:
+ * 	1. Double-click a MN. This shows only the contents of the MN on the canvas and nothing else.
+ * 		Have some way of "zooming back out"
+ * 	2. Open contents of MN in a new window w/ canvas
+ * 	3. 
  * 
  */
 
 package genseq.obj;
 
-import java.util.ArrayList;
-import java.util.Random;
-
-import javax.sound.midi.InvalidMidiDataException;
-
 import genseq.midi.GenSeq;
 import genseq.midi.Playable;
 import genseq.midi.ScoreTraverser;
+import javax.sound.midi.InvalidMidiDataException;
+import java.util.ArrayList;
+import java.util.Random;
 
-public class MetaNode extends Node implements Playable {
+public class MetaNode extends Node {
 
 	private ArrayList<Node> nodes;
 	private ArrayList<Edge>	edges;
 	private Node currNode;
+	private int metaID;
 	
-	public MetaNode(GenSeq parent, int canvasID, int x, int y) {
-		super(parent, canvasID, x, y);
+	public MetaNode(GenSeq parent, int metaID, int x, int y) {
+		super(parent, x, y);
+		this.metaID = metaID;
 		currNode = null;
 	}
 
@@ -46,6 +50,14 @@ public class MetaNode extends Node implements Playable {
 
 	public ArrayList<Edge> getEdges() {
 		return edges;
+	}
+	
+	public int getMetaID() {
+		return metaID;
+	}
+	
+	public void setMetaID(int metaID) {
+		this.metaID = metaID;
 	}
 	
 	/**
@@ -90,7 +102,8 @@ public class MetaNode extends Node implements Playable {
 		 * know when/if the Traverser needs to exit this MN. 
 		 */
 		
-		return null;
+		// Return the last NodeEvent, which could still be useful to the Node inside of this MetaNode.
+		return lastEvent;
 	}
 	
 	/**
@@ -112,5 +125,9 @@ public class MetaNode extends Node implements Playable {
 		}
 		st.start();
 		t = st;
+	}
+	
+	public boolean equals(MetaNode mn) {
+		return (mn.getMetaID() == this.getMetaID());
 	}
 }
