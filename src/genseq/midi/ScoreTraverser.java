@@ -82,7 +82,7 @@ public class ScoreTraverser extends Thread {
 
 			// Stop playing the last node
 			try {
-				currn.stop();
+				currn.stop(this);
 			} catch (InvalidMidiDataException e) {
 				System.err.println("Error playing node!");
 				e.printStackTrace();
@@ -100,7 +100,7 @@ public class ScoreTraverser extends Thread {
 			
 			/** PERFORM NODE ACTIONS **/
 			try {
-				lastEvent = currn.respond(lastEvent);
+				lastEvent = currn.respond(lastEvent, this);
 			} catch (InvalidMidiDataException e) {
 				System.err.println("Error playing node!");
 				e.printStackTrace();
@@ -111,6 +111,17 @@ public class ScoreTraverser extends Thread {
 			// Check to see if we are at the end of the circuit
 			if (0 == currn.getOutboundEdges().size()) {
 				done = true;
+				
+				try {
+					// N.B. The user will have to end the Score with a REST; otherwise, the last
+					// Note will be very short, since it will be stopped immediately after its
+					// containing Node is called to respond().
+					currn.stop(this);
+				} catch (InvalidMidiDataException e) {
+					System.err.println("Error playing node!");
+					e.printStackTrace();
+				}
+				
 				return;
 			}			
 			
@@ -129,7 +140,7 @@ public class ScoreTraverser extends Thread {
 			
 		}
 	}
-	
+	n
 	/**
 	 * tick()
 	 * 
@@ -150,6 +161,19 @@ public class ScoreTraverser extends Thread {
 			
 		// Update the traverser
 		run();
+	}
+	
+	/**
+	 * setLocation(Node n)
+	 * Changes the current location of the ScoreTraverser to some other
+	 * node. This is useful for jumping into and out of MetaNodes, or for
+	 * responding to MIDI input.
+	 * 
+	 * @param n - The new location (Node) of this ScoreTraverser
+	 */
+	public void setLocation(Node n) {
+		currn = n;
+		status = NODE_PLAY;
 	}
 	
 	/**

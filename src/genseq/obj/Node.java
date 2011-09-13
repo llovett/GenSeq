@@ -14,7 +14,7 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.ShortMessage;
 
-public class Node extends DrawableObject implements MIDIConstants {
+public class Node extends DrawableObject implements MIDIConstants, Playable {
 
 	/*** INTERNAL CONSTANTS ***/
 	private static final int DEFAULT_WIDTH = 30;
@@ -54,6 +54,9 @@ public class Node extends DrawableObject implements MIDIConstants {
 	private boolean legato; // True if other previous event's notes should be stopped first before this node responds.
 	private ArrayList<NodeEvent> eventList;	// List of pitches that may be played
 	private boolean selected;
+	
+	private int metaID;		// Numerical ID of the MetaNode that contains this Node. If this Node is not
+							// contained within a MetaNode, this value is -1.
 
 	/*** MIDI CONTROL ***/
 	private static Receiver midisend;
@@ -71,6 +74,7 @@ public class Node extends DrawableObject implements MIDIConstants {
 	public Node(GenSeq parent, int canvasID, int x, int y) {
 		super(parent);
 		this.canvasID = canvasID;
+		metaID = -1;
 
 		setX(x);
 		setY(y);
@@ -199,7 +203,8 @@ public class Node extends DrawableObject implements MIDIConstants {
 	 *
 	 * @throws InvalidMidiDataException 
 	 **/
-	public NodeEvent respond(NodeEvent lastEvent) throws InvalidMidiDataException {
+	public NodeEvent respond(NodeEvent lastEvent, ScoreTraverser t)
+		throws InvalidMidiDataException {
 
 		// What event shall we play?
 		double lsum = 0.0;
@@ -273,7 +278,7 @@ public class Node extends DrawableObject implements MIDIConstants {
 	 * @throws InvalidMidiDataException 
 	 * 
 	 */
-	public void stop() throws InvalidMidiDataException {
+	public void stop(ScoreTraverser t) throws InvalidMidiDataException {
 
 		// Dummy stop
 		ShortMessage msg = new ShortMessage();
@@ -405,6 +410,26 @@ public class Node extends DrawableObject implements MIDIConstants {
 	 */
 	public int getCanvasID() {
 		return canvasID;
+	}
+	
+	/**
+	 * getMetaID()
+	 * 
+	 * @return - The numerical ID of the MetaNode that contains this Node.
+	 * If this Node is not contained within a MetaNode, this value is -1.
+	 * 
+	 */
+	protected int getMetaID() {
+		return metaID;
+	}
+	
+	/**
+	 * setMetaID
+	 * 
+	 * @param metaID - Set this Node's metaID.
+	 */
+	protected void setMetaID(int metaID) {
+		this.metaID = metaID;
 	}
 	
 	//	/**

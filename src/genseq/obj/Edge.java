@@ -1,8 +1,12 @@
 package genseq.obj;
 
+import javax.sound.midi.InvalidMidiDataException;
+
+import genseq.midi.Playable;
+import genseq.midi.ScoreTraverser;
 import processing.core.*;
 
-public class Edge extends DrawableObject {
+public class Edge extends DrawableObject implements Playable {
 	private static final int DEFAULT_STROKE_RED = 0;
 	private static final int DEFAULT_STROKE_GREEN = 0;
 	private static final int DEFAULT_STROKE_BLUE = 0;
@@ -120,5 +124,18 @@ public class Edge extends DrawableObject {
 
 	public int compareTo(Edge e) {
 		return length - e.getLength();
+	}
+
+	@Override
+	public NodeEvent respond(NodeEvent lastEvent, ScoreTraverser t)
+			throws InvalidMidiDataException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void stop(ScoreTraverser t) throws InvalidMidiDataException {
+		// TODO Auto-generated method stub
+		
 	}
 }
