@@ -23,11 +23,41 @@ import genseq.midi.GenSeq;
 import genseq.midi.Playable;
 import genseq.midi.ScoreTraverser;
 import javax.sound.midi.InvalidMidiDataException;
+
+import processing.core.PApplet;
+
 import java.util.ArrayList;
 import java.util.Random;
 
 public class MetaNode extends Node {
 
+	/*** INTERNAL CONSTANTS ***/
+	/** overridden from Node **/
+	protected static final int DEFAULT_RED = 0;
+	protected static final int DEFAULT_GREEN = 100;
+	protected static final int DEFAULT_BLUE = 255;
+	protected static final int DEFAULT_STROKE_RED = 0;
+	protected static final int DEFAULT_STROKE_GREEN = 50;
+	protected static final int DEFAULT_STROKE_BLUE = 200;
+	protected static final int DEFAULT_STROKE_WEIGHT = 3;
+	protected static final int PN_RED = 100;
+	protected static final int PN_GREEN = 255;
+	protected static final int PN_BLUE = 0;
+	protected static final int PN_STROKE_RED = 50;
+	protected static final int PN_STROKE_GREEN = 200;
+	protected static final int PN_STROKE_BLUE = 0;
+	protected static final int HIGHLIGHT_RED = 0;
+	protected static final int HIGHLIGHT_GREEN = 255;
+	protected static final int HIGHLIGHT_BLUE = 255;
+	protected static final int HIGHLIGHT_STROKE_RED = 0;
+	protected static final int HIGHLIGHT_STROKE_GREEN = 200;
+	protected static final int HIGHLIGHT_STROKE_BLUE = 200;
+	protected static final int SELECT_HALO = 20;
+	protected static final int SELECT_HALO_RED = 255;
+	protected static final int SELECT_HALO_GREEN = 255;
+	protected static final int SELECT_HALO_BLUE = 200;
+	
+	/*** INTERNAL CONTROL ***/
 	private ArrayList<Node> nodes;
 	private ArrayList<Edge>	edges;
 	private Node currNode;
@@ -36,6 +66,10 @@ public class MetaNode extends Node {
 	public MetaNode(GenSeq parent, int metaID, int x, int y) {
 		super(parent, x, y);
 		this.metaID = metaID;
+		
+		nodes = new ArrayList<Node>();
+		edges = new ArrayList<Edge>();
+		
 		currNode = null;
 	}
 
@@ -129,5 +163,25 @@ public class MetaNode extends Node {
 	
 	public boolean equals(MetaNode mn) {
 		return (mn.getMetaID() == this.getMetaID());
+	}
+
+	/**
+	 * render() - draw this object
+	 *
+	 **/
+	public void render() {
+		setupDrawPrefs();
+
+		parent.pushMatrix();
+		parent.translate(x, y);
+
+		if (selected) {
+			parent.imageMode(PApplet.CENTER);
+			parent.image(img, 0, 0);
+		}
+
+		parent.rect(0, 0, w, w);
+		parent.popMatrix();
+
 	}
 }

@@ -17,51 +17,51 @@ import javax.sound.midi.ShortMessage;
 public class Node extends DrawableObject implements MIDIConstants, Playable {
 
 	/*** INTERNAL CONSTANTS ***/
-	private static final int DEFAULT_WIDTH = 30;
-	private static final int DEFAULT_HEIGHT = 30;
-	private static final int DEFAULT_RED = 255;
-	private static final int DEFAULT_GREEN = 100;
-	private static final int DEFAULT_BLUE = 0;
-	private static final int DEFAULT_STROKE_RED = 200;
-	private static final int DEFAULT_STROKE_GREEN = 50;
-	private static final int DEFAULT_STROKE_BLUE = 0;
-	private static final int DEFAULT_STROKE_WEIGHT = 3;
-	private static final int PN_RED = 100;
-	private static final int PN_GREEN = 255;
-	private static final int PN_BLUE = 0;
-	private static final int PN_STROKE_RED = 50;
-	private static final int PN_STROKE_GREEN = 200;
-	private static final int PN_STROKE_BLUE = 0;
-	private static final int HIGHLIGHT_RED = 255;
-	private static final int HIGHLIGHT_GREEN = 255;
-	private static final int HIGHLIGHT_BLUE = 100;
-	private static final int HIGHLIGHT_STROKE_RED = 200;
-	private static final int HIGHLIGHT_STROKE_GREEN = 200;
-	private static final int HIGHLIGHT_STROKE_BLUE = 0;
-	private static final int SELECT_HALO = 20;
-	private static final int SELECT_HALO_RED = 255;
-	private static final int SELECT_HALO_GREEN = 255;
-	private static final int SELECT_HALO_BLUE = 200;
+	protected static final int DEFAULT_WIDTH = 30;
+	protected static final int DEFAULT_HEIGHT = 30;
+	protected static final int DEFAULT_RED = 255;
+	protected static final int DEFAULT_GREEN = 100;
+	protected static final int DEFAULT_BLUE = 0;
+	protected static final int DEFAULT_STROKE_RED = 200;
+	protected static final int DEFAULT_STROKE_GREEN = 50;
+	protected static final int DEFAULT_STROKE_BLUE = 0;
+	protected static final int DEFAULT_STROKE_WEIGHT = 3;
+	protected static final int PN_RED = 100;
+	protected static final int PN_GREEN = 255;
+	protected static final int PN_BLUE = 0;
+	protected static final int PN_STROKE_RED = 50;
+	protected static final int PN_STROKE_GREEN = 200;
+	protected static final int PN_STROKE_BLUE = 0;
+	protected static final int HIGHLIGHT_RED = 255;
+	protected static final int HIGHLIGHT_GREEN = 255;
+	protected static final int HIGHLIGHT_BLUE = 100;
+	protected static final int HIGHLIGHT_STROKE_RED = 200;
+	protected static final int HIGHLIGHT_STROKE_GREEN = 200;
+	protected static final int HIGHLIGHT_STROKE_BLUE = 0;
+	protected static final int SELECT_HALO = 20;
+	protected static final int SELECT_HALO_RED = 255;
+	protected static final int SELECT_HALO_GREEN = 255;
+	protected static final int SELECT_HALO_BLUE = 200;
 
 	/*** INTERNAL CONTROL / ATTRIBUTES ***/
 	// List of the edges incident to this node
-	private ArrayList<Edge> edges;			// "edges" contains any edge into or out of this node.
-	private ArrayList<Edge> inboundEdges;	// "inboundEdges" contains only edges into this node.
-	private ArrayList<Edge> outboundEdges;	// "outboundEdges" contains only edges out of this node.
+	protected ArrayList<Edge> edges;			// "edges" contains any edge into or out of this node.
+	protected ArrayList<Edge> inboundEdges;	// "inboundEdges" contains only edges into this node.
+	protected ArrayList<Edge> outboundEdges;	// "outboundEdges" contains only edges out of this node.
 
-	private boolean prime;	// Whether or not the sequencer should begin playing with this node
-	private boolean legato; // True if other previous event's notes should be stopped first before this node responds.
-	private ArrayList<NodeEvent> eventList;	// List of pitches that may be played
-	private boolean selected;
+	protected boolean prime;	// Whether or not the sequencer should begin playing with this node
+	protected boolean legato; // True if other previous event's notes should be stopped first before this node responds.
+	protected ArrayList<NodeEvent> eventList;	// List of pitches that may be played
+	protected boolean selected;
 	
-	private MetaNode metaNode;		// Numerical ID of the MetaNode that contains this Node. If this Node is not
+	protected MetaNode metaNode;		// Numerical ID of the MetaNode that contains this Node. If this Node is not
 									// contained within a MetaNode, this value is -1.
 
 	/*** MIDI CONTROL ***/
-	private static Receiver midisend;
+	protected static Receiver midisend;
 
 	/*** GRAPHICAL FX ***/
-	private static PImage img;
+	protected static PImage img;
 	
 	/**
 	 * CONSTRUCTOR
@@ -517,10 +517,10 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 
 
 	/*****************
-	 * PRIVATE METHODS
+	 * protected METHODS
 	 *****************/
 
-	private void colorize() {
+	protected void colorize() {
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 		setStrokeWeight(DEFAULT_STROKE_WEIGHT);
 
@@ -534,12 +534,12 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 		}
 	}
 
-	private void highlight() {
+	protected void highlight() {
 		setColor(HIGHLIGHT_RED, HIGHLIGHT_GREEN, HIGHLIGHT_BLUE);
 		setStrokeColor(HIGHLIGHT_STROKE_RED, HIGHLIGHT_STROKE_GREEN, HIGHLIGHT_STROKE_BLUE);
 	}
 	
-	private float constrain(float x, float low, float high) {
+	protected float constrain(float x, float low, float high) {
 		float r1 = (x < low? low : x);
 		float r2 = (high < r1? high : r1);
 		return r2;
@@ -547,7 +547,7 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 	
 	
 
-	//	private void setAttributes() {
+	//	protected void setAttributes() {
 	//		// Whether or not this node is prime
 	//		attributes.put("prime",
 	//				new AttPair<String, Boolean>("Use as prime node", 
@@ -569,8 +569,8 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 
 	public class AttPair<String, V> {
 
-		private String desc;
-		private V data;
+		protected String desc;
+		protected V data;
 
 		public AttPair(String desc, V data) {
 			this.desc = desc;
@@ -600,8 +600,8 @@ public class Node extends DrawableObject implements MIDIConstants, Playable {
 	//	 */
 	//	public class NodeAttributes {
 	//		
-	//		private Hashtable<String, Object> attributes;
-	//		private Node parent;
+	//		protected Hashtable<String, Object> attributes;
+	//		protected Node parent;
 	//		
 	//		public NodeAttributes(Node parent) {
 	//			this.parent = parent;

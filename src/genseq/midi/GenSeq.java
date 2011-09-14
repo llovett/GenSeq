@@ -141,6 +141,8 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 		// Circuit popup menu
 		MenuItem pmDeleteSelection = new MenuItem("Delete selection");
 		pmDeleteSelection.addActionListener(new pmDeleteSelectionActionListener());
+		MenuItem pmEncapulateSelection = new MenuItem("Encapsulate");
+		pmEncapsulateSelection.addActionListener(new pmEncapsulateSelectionActionListener());
 		
 		circuitPopupMenu.add(pmDeleteSelection);
 		circuitPopupMenu.add(pmDuplicate);
@@ -526,6 +528,29 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 				s.removeNode(n);
 			for (Edge ed : s.getSelectedEdges())
 				s.removeEdge(ed);
+		}
+		
+	}
+	
+	private class pmEncapsulateSelectionActionListener implements ActionListener {
+		
+		public void actionPerformed(ActionEvent e) {
+			Score s = scores.get(activeScore);
+			
+			int avgX, avgY;
+			avgX = avgY = 0;
+			for (Node n : s.getSelectedNodes()) {
+				avgX += n.getX();
+				avgY += n.getY();
+			}
+			avgX = (int)((double)avgX / s.getSelectedNodes().size());
+			avgY = (int)((double)avgY / s.getSelectedNodes().size());
+			
+			s.encapsulateNodes(new MetaNode(this,
+					s.getMetaNodes().size(),
+					avgX,
+					avgY),
+					s.getSelectedNodes());
 		}
 		
 	}

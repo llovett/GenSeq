@@ -72,6 +72,7 @@ public class Score implements ActionListener, MouseListener {
 	/*** GLOBAL DATA ***/
 	private ArrayList<Node> nodes;
 	private ArrayList<Edge> edges;
+	private ArrayList<MetaNode> metaNodes;
 	private int prevX, prevY;
 	
 	
@@ -85,6 +86,7 @@ public class Score implements ActionListener, MouseListener {
 		
 		nodes = new ArrayList<Node>();
 		edges = new ArrayList<Edge>();
+		metaNodes = new ArrayList<MetaNode>();
 		
 		ncomp = new NodeComparator();
 		ecomp = new EdgeComparator();
@@ -285,6 +287,15 @@ public class Score implements ActionListener, MouseListener {
 	}
 	
 	/**
+	 * getMetaNodes()
+	 * 
+	 * @return - A list of all the MetaNodes on this score.
+	 */
+	public ArrayList<MetaNode> getMetaNodes() {
+		return metaNodes;
+	}
+	
+	/**
 	 * getSelectedNodes()
 	 * 
 	 * @return - A list of all the nodes that are currently selected ("active" nodes)
@@ -365,6 +376,21 @@ public class Score implements ActionListener, MouseListener {
 			e.select();
 		
 		activeEdges.addAll(edges);
+	}
+	
+	/**
+	 * encapsulateNodes(Collection<Node> nodes)
+	 * Adds a collection of Nodes to the encapsulated content of a MetaNode. 
+	 * 
+	 * @param m		- The MetaNode that should hold the encapsulated Nodes
+	 * @param nodes - A Collection of Nodes to be encapsulated by a MetaNode
+	 */
+	public void encapsulateNodes(MetaNode m, Collection<Node> nodes) {
+		if (! metaNodes.contains(m))
+			metaNodes.add(m);
+		
+		ArrayList<Node> encNodes = m.getNodes();
+		encNodes.addAll(nodes);
 	}
 	
 	/*******************************************************
