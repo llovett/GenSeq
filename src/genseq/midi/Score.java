@@ -377,6 +377,31 @@ public class Score implements ActionListener, MouseListener {
 		
 		activeEdges.addAll(edges);
 	}
+
+	/**
+	 * encapsulateSelection()
+	 *
+	 * Encapsulates the current selection of Nodes and Edges inside of a new MetaNode.
+	 **/
+	public void encapsulateSelection() {
+			int avgX, avgY;
+			avgX = avgY = 0;
+
+			for (Node n : s.getSelectedNodes()) {
+				avgX += n.getX();
+				avgY += n.getY();
+			}
+			avgX = (int)((double)avgX / s.getSelectedNodes().size());
+			avgY = (int)((double)avgY / s.getSelectedNodes().size());
+			
+			encapsulateNodes(new MetaNode(parent,
+					getMetaNodes().size(),
+					avgX,
+					avgY),
+					getSelectedNodes());
+
+	}
+
 	
 	/**
 	 * encapsulateNodes(Collection<Node> nodes)
@@ -385,7 +410,7 @@ public class Score implements ActionListener, MouseListener {
 	 * @param m		- The MetaNode that should hold the encapsulated Nodes
 	 * @param nodes - A Collection of Nodes to be encapsulated by a MetaNode
 	 */
-	public void encapsulateNodes(MetaNode m, Collection<Node> nodes) {
+	private void encapsulateNodes(MetaNode m, Collection<Node> nodes) {
 		if (! metaNodes.contains(m))
 			metaNodes.add(m);
 		

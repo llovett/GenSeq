@@ -535,22 +535,7 @@ public class GenSeq extends PApplet implements ActionListener, MouseListener, Mo
 	private class pmEncapsulateSelectionActionListener implements ActionListener {
 		
 		public void actionPerformed(ActionEvent e) {
-			Score s = scores.get(activeScore);
-			
-			int avgX, avgY;
-			avgX = avgY = 0;
-			for (Node n : s.getSelectedNodes()) {
-				avgX += n.getX();
-				avgY += n.getY();
-			}
-			avgX = (int)((double)avgX / s.getSelectedNodes().size());
-			avgY = (int)((double)avgY / s.getSelectedNodes().size());
-			
-			s.encapsulateNodes(new MetaNode(this,
-					s.getMetaNodes().size(),
-					avgX,
-					avgY),
-					s.getSelectedNodes());
+			scores.get(activeScore).encapsulateSelection();
 		}
 		
 	}
